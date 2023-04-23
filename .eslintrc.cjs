@@ -4,12 +4,7 @@ module.exports = {
 		es2022: true,
 		node: true,
 	},
-	extends: [
-		"eslint:recommended",
-		"plugin:eslint-comments/recommended",
-		"plugin:regexp/recommended",
-		"prettier",
-	],
+	extends: ["eslint:recommended", "plugin:eslint-comments/recommended", "plugin:regexp/recommended", "prettier"],
 	overrides: [
 		{
 			extends: ["plugin:markdown/recommended"],
@@ -17,18 +12,12 @@ module.exports = {
 			processor: "markdown/markdown",
 		},
 		{
-			extends: [
-				"plugin:@typescript-eslint/recommended",
-				"plugin:typescript-sort-keys/recommended",
-			],
+			extends: ["plugin:@typescript-eslint/recommended", "plugin:typescript-sort-keys/recommended"],
 			files: ["**/*.ts"],
 			parser: "@typescript-eslint/parser",
 		},
 		{
-			extends: [
-				"plugin:@typescript-eslint/recommended-requiring-type-checking",
-				"plugin:@typescript-eslint/strict",
-			],
+			extends: ["plugin:@typescript-eslint/recommended-requiring-type-checking", "plugin:@typescript-eslint/strict"],
 			excludedFiles: ["**/*.md/*.ts"],
 			files: ["**/*.ts"],
 			parser: "@typescript-eslint/parser",
@@ -81,16 +70,7 @@ module.exports = {
 		},
 	],
 	parser: "@typescript-eslint/parser",
-	plugins: [
-		"@typescript-eslint",
-		"deprecation",
-		"import",
-		"no-only-tests",
-		"regexp",
-		"simple-import-sort",
-		"typescript-sort-keys",
-		"vitest",
-	],
+	plugins: ["@typescript-eslint", "deprecation", "import", "no-only-tests", "regexp", "simple-import-sort", "typescript-sort-keys"],
 	root: true,
 	rules: {
 		// These off-by-default rules work well for this repo and we like them on.
@@ -104,9 +84,6 @@ module.exports = {
 
 		// Stylistic concerns that don't interfere with Prettier
 		"padding-line-between-statements": "off",
-		"@typescript-eslint/padding-line-between-statements": [
-			"error",
-			{ blankLine: "always", next: "*", prev: "block-like" },
-		],
+		"@typescript-eslint/padding-line-between-statements": ["error", { blankLine: "always", next: "*", prev: "block-like" }],
 	},
 };
