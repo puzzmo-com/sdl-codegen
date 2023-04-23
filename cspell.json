@@ -1,15 +1,9 @@
 {
 	"dictionaries": ["typescript"],
-	"ignorePaths": [
-		".github",
-		"CHANGELOG.md",
-		"coverage",
-		"lib",
-		"node_modules",
-		"pnpm-lock.yaml",
-		"script/*.json"
-	],
+	"ignorePaths": [".github", "CHANGELOG.md", "coverage", "lib", "node_modules", "pnpm-lock.yaml", "script/*.json"],
 	"words": [
+		"orta",
+		"codegen",
 		"Codecov",
 		"codespace",
 		"commitlint",
