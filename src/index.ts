@@ -1,2 +1,2 @@
-export * from "./greet.js";
-export * from "./types.js";
+export * from "./main.js"
+export * from "./types.js"

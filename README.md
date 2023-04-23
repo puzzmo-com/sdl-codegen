@@ -2,41 +2,23 @@
 
 <p align="center">GraphQL .d.ts file generation for SDL-first projects</p>
 
-<p align="center">
-	<a href="#contributors" target="_blank">
-<!-- prettier-ignore-start -->
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-<img alt="All Contributors: 1" src="https://img.shields.io/badge/all_contributors-1-21bb42.svg" />
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
-<!-- prettier-ignore-end -->
-	</a>
-	<a href="https://codecov.io/gh/sdl-codegen/sdl-codegen" target="_blank">
-		<img alt="Codecov Test Coverage" src="https://codecov.io/gh/sdl-codegen/sdl-codegen/branch/main/graph/badge.svg?token=eVIFY4MhfQ"/>
-	</a>
-	<a href="https://github.com/sdl-codegen/sdl-codegen/blob/main/.github/CODE_OF_CONDUCT.md" target="_blank">
-		<img alt="Contributor Covenant" src="https://img.shields.io/badge/code_of_conduct-enforced-21bb42" />
-	</a>
-	<a href="https://github.com/sdl-codegen/sdl-codegen/blob/main/LICENSE.md" target="_blank">
-	    <img alt="License: MIT" src="https://img.shields.io/github/license/sdl-codegen/sdl-codegen?color=21bb42">
-    </a>
-	<a href="https://github.com/sponsors/sdl-codegen" target="_blank">
-    	<img alt="Sponsor: On GitHub" src="https://img.shields.io/badge/sponsor-on_github-21bb42.svg" />
-    </a>
-	<img alt="Style: Prettier" src="https://img.shields.io/badge/style-prettier-21bb42.svg" />
-    <img alt="TypeScript: Strict" src="https://img.shields.io/badge/typescript-strict-21bb42.svg" />
-</p>
+## Goals
 
-## Usage
+The core idea is to have a codegen tool that can generate `.d.ts` files from GraphQL SDL files. This is useful for projects that use GraphQL SDL files as their source of truth, but still want to have type safety in their codebase. This project won't happen overnight.
 
-```shell
-npm i sdl-codegen
-```
+**Step one** is here: https://github.com/orta/redwood-codegen-api-types/tree/main#how-to-use-this-in-a-redwood-project
 
-```ts
-import { greet } from "sdl-codegen";
+**Step two** is to take the above and to start making it more generalized, but to still make it work well with RedwoodJS.
 
-greet("Hello, world!");
-```
+**Step three** will be to make Redwood just a config option.
+
+## Pipeline
+
+This app will be architected to be a pipeline of sorts. Here's the rough stages:
+
+- Get inputs: GraphQL schema, files which we want to make .d.ts files for, Prisma dmmf and config
+- Parse inputs: Parse the GraphQL schema, parse the files, parse the Prisma dmmf
+- Generate outputs: Generate .d.ts files for the files we want to generate them for
 
 ## Development
 

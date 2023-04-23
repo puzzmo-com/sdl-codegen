@@ -86,4 +86,4 @@ module.exports = {
 		"padding-line-between-statements": "off",
 		"@typescript-eslint/padding-line-between-statements": ["error", { blankLine: "always", next: "*", prev: "block-like" }],
 	},
-};
+}
