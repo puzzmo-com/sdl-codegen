@@ -32,7 +32,7 @@
 	},
 	"lint-staged": {
 		"*": "prettier --ignore-unknown --write;",
-		"*.ts": "eslint --fix"
+		"*.ts": "eslint --fix  --max-warnings 0"
 	},
 	"jest": {
 		"transform": {
