@@ -23,7 +23,7 @@ jobs:
           script: |
             try {
               await github.request(
-                `DELETE /repos/JoshuaKGoldberg/template-typescript-node-package/branches/main/protection`,
+                `DELETE /repos/sdl-codegen/sdl-codegen/branches/main/protection`,
               );
             } catch (error) {
               if (!error.message?.includes?.("Branch not protected")) {
@@ -40,10 +40,10 @@ jobs:
           github-token: ${{ secrets.ACCESS_TOKEN }}
           # Note: keep this inline script in sync with script/setup.js!
           # Todo: it would be nice to not have two sources of truth...
-          # https://github.com/JoshuaKGoldberg/template-typescript-node-package/issues/145
+          # https://github.com/sdl-codegen/sdl-codegen/issues/145
           script: |
             github.request(
-              `PUT /repos/JoshuaKGoldberg/template-typescript-node-package/branches/main/protection`,
+              `PUT /repos/sdl-codegen/sdl-codegen/branches/main/protection`,
               {
                 allow_deletions: false,
                 allow_force_pushes: true,
@@ -52,8 +52,8 @@ jobs:
                 block_creations: false,
                 branch: "main",
                 enforce_admins: false,
-                owner: "JoshuaKGoldberg",
-                repo: "template-typescript-node-package",
+                owner: "sdl-codegen",
+                repo: "sdl-codegen",
                 required_conversation_resolution: true,
                 required_linear_history: false,
                 required_pull_request_reviews: null,
