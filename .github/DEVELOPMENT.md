@@ -46,9 +46,6 @@ Each should be shown in VS Code, and can be run manually on the command-line:
 
 ## Testing
 
-[Vitest](https://vitest.dev) is used for tests.
-You can run it locally on the command-line:
-
 ```shell
 pnpm run test
 ```

@@ -31,7 +31,8 @@
 		"test": "jest"
 	},
 	"lint-staged": {
-		"*": "prettier --ignore-unknown --write"
+		"*": "prettier --ignore-unknown --write;",
+		"*.ts": "eslint --fix"
 	},
 	"jest": {
 		"transform": {
