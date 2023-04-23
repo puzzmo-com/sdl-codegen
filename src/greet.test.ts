@@ -1,6 +1,6 @@
 import { describe, it } from "@jest/globals";
 
-import { greet } from "./greet.js";
+import { greet } from "./greet";
 
 describe("greet", () => {
 	it("logs to the console once when message is provided as a string", () => {
