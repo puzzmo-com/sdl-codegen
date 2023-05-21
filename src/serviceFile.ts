@@ -10,8 +10,10 @@ import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsFo
 export const lookAtServiceFile = (file: string, context: AppContext) => {
 	const { gql, prisma, settings } = context
 
-	if (!gql) throw new Error("No schema")
-	if (!prisma) throw new Error("No prisma schema")
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	if (!gql) throw new Error(`No schema when wanting to look at service file: ${file}`)
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	if (!prisma) throw new Error(`No prisma schema when wanting to look at service file: ${file}`)
 
 	// This isn't good enough, needs to be relative to api/src/services
 	const filename = context.basename(file)
@@ -27,10 +29,10 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 	const fileDTS = context.tsProject.createSourceFile("/source/index.d.ts", "", { overwrite: true })
 
-	const queryType = gql.getQueryType()
+	const queryType = gql.getQueryType()!
 	if (!queryType) throw new Error("No query type")
 
-	const mutationType = gql.getMutationType()
+	const mutationType = gql.getMutationType()!
 	if (!mutationType) throw new Error("No mutation type")
 
 	const externalMapper = typeMapper(context, { preferPrismaModels: true })
@@ -79,7 +81,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		...new Set([
 			...sharedGraphQLObjectsReferenced.prisma,
 			...sharedInternalGraphQLObjectsReferenced.prisma,
-			...(extraPrismaReferences.values() || []),
+			...extraPrismaReferences.values(),
 		]),
 	]
 
@@ -110,11 +112,10 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	fileDTS.formatText({ indentSize: 2 })
 
 	context.sys.writeFile(context.join(context.settings.typesFolderRoot, filename.replace(".ts", ".d.ts")), fileDTS.getText())
-
 	return
 
 	function addTypeForQueryResolver(name: string, config: ResolverTypeInformation) {
-		let field = queryType!.getFields()[name]
+		let field = queryType.getFields()[name]
 		if (!field) {
 			field = mutationType!.getFields()[name]
 		}
@@ -138,7 +139,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 			mapper: externalMapper.map,
 		})
 
-		const argsParam = args || "object"
+		const argsParam = args ?? "object"
 
 		const parentType = config.parentName === "Query" || config.parentName === "Mutation" ? "object" : config.parentName
 		const tType = returnTypeMapper.map(field.type, { preferNullOverUndefined: true, typenamePrefix: "RT" })
@@ -173,7 +174,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 			if (!name.match(/^[A-Z]/)) return
 
 			const type = d.getType()
-			const hasGenericArgs = type && type.getText().includes("<")
+			const hasGenericArgs = type.getText().includes("<")
 			const fieldFacts: FieldFacts = {}
 
 			// Grab the const Thing = { ... }

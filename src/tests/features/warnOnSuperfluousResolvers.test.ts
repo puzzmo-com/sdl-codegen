@@ -1,8 +1,8 @@
 import { expect, it } from "vitest"
 
-import { getDTSFilesForRun, graphql, prisma } from "./testRunner"
+import { getDTSFilesForRun, graphql, prisma } from "../testRunner"
 
-it("It prints a warning, and doesn't crash when you have resolvers which exist but are not on the parent", async () => {
+it("It prints a warning, and doesn't crash when you have resolvers which exist but are not on the parent", () => {
 	const prismaSchema = prisma`
 model Game {
     id            Int          @id @default(autoincrement())
@@ -28,7 +28,7 @@ export const Game: GameResolvers = {
 
 `
 
-	const { vfs } = getDTSFilesForRun({ sdl, services, prismaSchema })
+	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService: services, prismaSchema })
 
-	expect(vfs.get("/types/games.d.ts")!).toContain("// This field does not exist in the generated schema.graphql\n")
+	expect(vfsMap.get("/types/games.d.ts")!).toContain("// This field does not exist in the generated schema.graphql\n")
 })

@@ -10,14 +10,14 @@ import { lookAtServiceFile } from "../serviceFile.js"
 import type { FieldFacts } from "../typeFacts.js"
 
 interface Run {
-	prismaSchema: string
-	sdl: string
-	services: string
+	gamesService?: string
+	prismaSchema?: string
+	sdl?: string
 }
 
 export function getDTSFilesForRun(run: Run) {
-	const prisma = getPrismaSchema(run.prismaSchema)
-	let gqlSDL = run.sdl
+	const prisma = getPrismaSchema(run.prismaSchema ?? "")
+	let gqlSDL = run.sdl ?? ""
 	if (!gqlSDL.includes("type Query")) gqlSDL += "type Query { _: String }\n"
 	if (!gqlSDL.includes("type Mutation")) gqlSDL += "type Mutation { __: String }"
 
@@ -25,7 +25,6 @@ export function getDTSFilesForRun(run: Run) {
 	const project = new Project({ useInMemoryFileSystem: true })
 
 	const vfsMap = new Map<string, string>()
-	vfsMap.set("/api/src/services/games.ts", run.services)
 
 	const vfs = createSystem(vfsMap)
 
@@ -48,10 +47,13 @@ export function getDTSFilesForRun(run: Run) {
 		join,
 	}
 
-	lookAtServiceFile("/api/src/services/games.ts", appContext)
+	if (run.gamesService) {
+		vfsMap.set("/api/src/services/games.ts", run.gamesService)
+		lookAtServiceFile("/api/src/services/games.ts", appContext)
+	}
 
 	return {
-		vfs: vfsMap,
+		vfsMap,
 		appContext,
 	}
 }

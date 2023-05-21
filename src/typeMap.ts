@@ -42,10 +42,11 @@ export const typeMapper = (context: AppContext, config: { preferPrismaModels?: t
 		// So we can add the | undefined
 		const getInner = () => {
 			if (graphql.isListType(type)) {
+				const typeStr = map(type.ofType, mapConfig)!
 				if (graphql.isNonNullType(type.ofType)) {
-					return `${map(type.ofType, mapConfig)}[]`
+					return `${typeStr}[]`
 				} else {
-					return `Array<${map(type.ofType, mapConfig)}>`
+					return `Array<${typeStr}>`
 				}
 			}
 
@@ -95,6 +96,7 @@ export const typeMapper = (context: AppContext, config: { preferPrismaModels?: t
 				return prefix + type.name
 			}
 
+			// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 			throw new Error(`Unknown type ${type} - ${JSON.stringify(type, null, 2)}`)
 		}
 

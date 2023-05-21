@@ -1,6 +1,6 @@
 import { expect, it } from "vitest"
 
-import { getDTSFilesForRun, graphql, prisma } from "./testRunner"
+import { getDTSFilesForRun, graphql, prisma } from "../testRunner"
 
 it("It allows you to add a generic parameter", async () => {
 	const prismaSchema = prisma`
@@ -25,12 +25,12 @@ import { db } from "src/lib/db";
 export const Game: GameResolvers<{ type: string }> = {};
 `
 
-	const { vfs } = getDTSFilesForRun({ sdl, services, prismaSchema })
+	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService: services, prismaSchema })
 
-	expect(vfs.get("/types/games.d.ts")!).toContain("interface GameTypeResolvers<Extended>")
-	expect(vfs.get("/types/games.d.ts")!).toContain("GameAsParent<Extended> = PGame & {} & Extended")
+	expect(vfsMap.get("/types/games.d.ts")!).toContain("interface GameTypeResolvers<Extended>")
+	expect(vfsMap.get("/types/games.d.ts")!).toContain("GameAsParent<Extended> = PGame & {} & Extended")
 
-	expect(vfs.get("/types/games.d.ts"))!.toContain(
+	expect(vfsMap.get("/types/games.d.ts"))!.toContain(
 		`
 import type { Game as PGame } from "@prisma/client";\n
 type GameAsParent<Extended> = PGame & {} & Extended;
