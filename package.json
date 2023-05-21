@@ -31,7 +31,7 @@
 		"type-check": "tsc --noEmit"
 	},
 	"lint-staged": {
-		"*": "prettier --ignore-unknown --write;",
+		"*": "prettier --ignore-unknown --write",
 		"*.ts": "eslint --fix  --max-warnings 0"
 	},
 	"dependencies": {
