@@ -49,9 +49,3 @@ Each should be shown in VS Code, and can be run manually on the command-line:
 ```shell
 pnpm run test
 ```
-
-Add the `--coverage` flag to compute test coverage and place reports in the `coverage/` directory:
-
-```shell
-pnpm run test --coverage
-```

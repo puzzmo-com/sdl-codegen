@@ -1,4 +1,4 @@
-// TODO: Remove
+// TODO: Remove?
 import { basename, join } from "node:path"
 
 import { getSchema as getPrismaSchema } from "@mrleebo/prisma-ast"

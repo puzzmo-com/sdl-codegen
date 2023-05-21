@@ -1,0 +1,74 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider      = "prisma-client-js"
+    binaryTargets = "native"
+}
+
+model Team {
+    id            Int          @id @default(autoincrement())
+    name          String       @unique
+    logoUrl       String?
+    Prediction    Prediction[]
+    homeTeamGames Game[]       @relation(name: "homeTeam")
+    awayTeamGames Game[]       @relation(name: "awayTeam")
+}
+
+model Prediction {
+    id         Int    @id @default(autoincrement())
+    userId     Int
+    gameId     Int
+    teamId     Int?
+    prediction String
+    seasonId   Int
+    season     Season @relation(fields: [seasonId], references: [id])
+    game       Game   @relation(fields: [gameId], references: [id])
+    user       User   @relation(fields: [userId], references: [id])
+    team       Team?  @relation(fields: [teamId], references: [id])
+}
+
+model Game {
+    id            Int          @id @default(autoincrement())
+    homeTeamId    Int
+    awayTeamId    Int
+    homeTeamScore Int?
+    awayTeamScore Int?
+    seasonId      Int
+    isCompleted   Boolean      @default(false)
+    predictions   Prediction[]
+    startDateTime DateTime
+    season        Season       @relation(fields: [seasonId], references: [id])
+    homeTeam      Team?        @relation(name: "homeTeam", references: [id], fields: [homeTeamId])
+    awayTeam      Team?        @relation(name: "awayTeam", references: [id], fields: [awayTeamId])
+}
+
+model Season {
+    id         Int          @id @default(autoincrement())
+    name       String       @unique
+    startDate  DateTime
+    endDate    DateTime
+    Prediction Prediction[]
+    Game       Game[]
+}
+
+model User {
+    id                  Int          @id @default(autoincrement())
+    email               String       @unique
+    username            String       @unique
+    hashedPassword      String
+    salt                String
+    resetToken          String?
+    resetTokenExpiresAt DateTime?
+    roles               String
+    predictions         Prediction[]
+}
+
+model RW_DataMigration {
+    version    String   @id
+    name       String
+    startedAt  DateTime
+    finishedAt DateTime
+}

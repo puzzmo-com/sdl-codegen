@@ -1,0 +1,224 @@
+"""
+Use to check whether or not a user is authenticated and is associated
+with an optional set of roles.
+"""
+directive @requireAuth(roles: [String]) on FIELD_DEFINITION
+
+"""Use to skip authentication checks and allow public access."""
+directive @skipAuth on FIELD_DEFINITION
+
+scalar BigInt
+
+input CreateGameInput {
+  awayTeamId: Int!
+  awayTeamScore: Int
+  homeTeamId: Int!
+  homeTeamScore: Int
+  isCompleted: Boolean
+  seasonId: Int!
+  startDateTime: DateTime!
+}
+
+input CreatePredictionInput {
+  gameId: Int!
+  prediction: String!
+  seasonId: Int!
+  teamId: Int
+  userId: Int!
+}
+
+input CreateSeasonInput {
+  endDate: DateTime!
+  name: String!
+  startDate: DateTime!
+}
+
+input CreateTeamInput {
+  logoUrl: String
+  name: String!
+}
+
+input CreateUserInput {
+  email: String!
+  hashedPassword: String!
+  resetToken: String
+  resetTokenExpiresAt: DateTime
+  roles: String!
+  salt: String!
+  username: String!
+}
+
+scalar Date
+
+scalar DateTime
+
+type Game {
+  awayTeam: Team!
+  awayTeamId: Int!
+  awayTeamScore: Int
+  homeTeam: Team!
+  homeTeamId: Int!
+  homeTeamScore: Int
+  id: Int!
+  isCompleted: Boolean!
+  predictions: [Prediction]!
+  season: Season!
+  seasonId: Int!
+  startDateTime: DateTime!
+}
+
+scalar JSON
+
+scalar JSONObject
+
+type Mutation {
+  createGame(input: CreateGameInput!): Game!
+  createPrediction(input: CreatePredictionInput!): Prediction!
+  createSeason(input: CreateSeasonInput!): Season!
+  createTeam(input: CreateTeamInput!): Team!
+  createUser(input: CreateUserInput!): User!
+  deleteGame(id: Int!): Game!
+  deletePrediction(id: Int!): Prediction!
+  deleteSeason(id: Int!): Season!
+  deleteTeam(id: Int!): Team!
+  deleteUser(id: Int!): User!
+  resetPassword(password: String!, resetToken: String!): User!
+  sendResetPasswordEmail(email: String!): SuccessInput
+  updateGame(id: Int!, input: UpdateGameInput!): Game!
+  updatePrediction(id: Int!, input: UpdatePredictionInput!): Prediction!
+  updateSeason(id: Int!, input: UpdateSeasonInput!): Season!
+  updateTeam(id: Int!, input: UpdateTeamInput!): Team!
+  updateUser(id: Int!, input: UpdateUserInput!): User!
+}
+
+type Prediction {
+  game: Game!
+  gameId: Int!
+  id: Int!
+  prediction: String!
+  team: Team
+  teamId: Int
+  user: User
+  userId: Int!
+}
+
+"""About the Redwood queries."""
+type Query {
+  game(id: Int!): Game
+  games: [Game!]!
+  myPredictions: [Prediction!]!
+  prediction(id: Int!): Prediction
+  predictions: [Prediction!]!
+
+  """Fetches the Redwood root schema."""
+  redwood: Redwood
+  season(id: Int!): Season
+  seasons: [Season!]!
+  standings(seasonId: Int!): StandingsResult
+  team(id: Int!): Team
+  teams: [Team!]!
+  upcomingGames: [Game!]!
+  user(id: Int!): User
+  users: [User!]!
+}
+
+"""
+The RedwoodJS Root Schema
+
+Defines details about RedwoodJS such as the current user and version information.
+"""
+type Redwood {
+  """The current user."""
+  currentUser: JSON
+
+  """The version of Prisma."""
+  prismaVersion: String
+
+  """The version of Redwood."""
+  version: String
+}
+
+type Season {
+  Prediction: [Prediction]!
+  endDate: DateTime!
+  id: Int!
+  name: String!
+  startDate: DateTime!
+}
+
+type StandingsData {
+  email: String!
+  score: Int!
+  userId: String!
+  username: String!
+}
+
+type StandingsResult {
+  userIdRankings: [StandingsData!]!
+}
+
+type SuccessInput {
+  message: String
+  success: Boolean
+}
+
+type Team {
+  Prediction: [Prediction]!
+  awayTeamGames: [Game]!
+  homeTeamGames: [Game]!
+  id: Int!
+  logoUrl: String
+  name: String!
+}
+
+scalar Time
+
+input UpdateGameInput {
+  awayTeamId: Int
+  awayTeamScore: Int
+  homeTeamId: Int
+  homeTeamScore: Int
+  isCompleted: Boolean
+  seasonId: Int
+  startDateTime: DateTime
+}
+
+input UpdatePredictionInput {
+  gameId: Int
+  prediction: String
+  teamId: Int
+  userId: Int
+}
+
+input UpdateSeasonInput {
+  endDate: DateTime
+  name: String
+  startDate: DateTime
+}
+
+input UpdateTeamInput {
+  logoUrl: String
+  name: String
+}
+
+input UpdateUserInput {
+  email: String
+  hashedPassword: String
+  resetToken: String
+  resetTokenExpiresAt: DateTime
+  roles: String
+  salt: String
+  username: String
+}
+
+type User {
+  email: String!
+  hashedPassword: String!
+  id: Int!
+  predictions: [Prediction]!
+  resetToken: String
+  resetTokenExpiresAt: DateTime
+  roles: String!
+  salt: String!
+  username: String!
+}

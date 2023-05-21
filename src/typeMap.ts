@@ -31,7 +31,7 @@ export const typeMapper = (context: AppContext, config: { preferPrismaModels?: t
 			typenamePrefix?: string
 		}
 	): string | undefined => {
-		const prefix = mapConfig.typenamePrefix || ""
+		const prefix = mapConfig.typenamePrefix ?? ""
 
 		// The AST for GQL uses a parent node to indicate the !, we need the opposite
 		// for TS which uses '| undefined' after.

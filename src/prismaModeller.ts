@@ -1,4 +1,4 @@
-import { Model as PrismaModel, Property as PrismaProperty, Schema as PrismaSchemaBlocks } from "@mrleebo/prisma-ast"
+import { Property as PrismaProperty, Schema as PrismaSchemaBlocks } from "@mrleebo/prisma-ast"
 
 interface Model {
 	leadingComments: string

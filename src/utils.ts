@@ -1,9 +1,9 @@
 import * as graphql from "graphql"
 import * as tsMorph from "ts-morph"
 
-import { TypeMapper, typeMapper } from "./typeMap.js"
+import { TypeMapper } from "./typeMap.js"
 
-export const varStartsWithUppercase = (v: tsMorph.VariableDeclaration) => v.getName()[0] === v.getName()[0].toUpperCase()
+export const varStartsWithUppercase = (v: tsMorph.VariableDeclaration) => v.getName()[0].startsWith(v.getName()[0].toUpperCase())
 
 export const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str.slice(1)
 

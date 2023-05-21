@@ -1,6 +1,6 @@
 {
 	"name": "@sdl-codegen/node",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"description": "GraphQL .d.ts file generation for SDL-first projects",
 	"repository": {
 		"type": "git",
@@ -44,6 +44,7 @@
 		"@types/node": "^16.16.0",
 		"@typescript-eslint/eslint-plugin": "^5.48.2",
 		"@typescript-eslint/parser": "^5.48.2",
+		"@typescript/vfs": "1.4.0",
 		"cspell": "^6.19.2",
 		"esbuild": "^0.17.18",
 		"eslint": "^8.32.0",

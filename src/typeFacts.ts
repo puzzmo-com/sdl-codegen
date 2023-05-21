@@ -1,6 +1,6 @@
 export type FieldFacts = Record<string, FieldFact>
 
-export type FieldFact = {
+export interface FieldFact {
 	hasResolverImplementation?: true
 	// isPrismaBacked?: true;
 }
