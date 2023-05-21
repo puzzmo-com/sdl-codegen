@@ -23,7 +23,7 @@ This app will be architected to be a pipeline of sorts. Here's the rough stages:
 ## Development
 
 See [`.github/CONTRIBUTING.md`](./.github/CONTRIBUTING.md), then [`.github/DEVELOPMENT.md`](./.github/DEVELOPMENT.md).
-Thanks! 💖
+Thanks!
 
 ## Contributors
 
