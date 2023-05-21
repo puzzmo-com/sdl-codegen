@@ -6,11 +6,16 @@ import { PrismaMap } from "./prismaModeller.js"
 import { FieldFacts } from "./typeFacts.js"
 
 export interface AppContext {
+	/** POSIX-y fn not built into System */
 	basename: (path: string) => string
+	/** Per GraphQL types */
 	fieldFacts: Map<string, FieldFacts>
+	/** An in-memory version of the main GraphQL instance */
 	gql: graphql.GraphQLSchema
+	/** POSXIY- fn not built into System */
 	join: (...paths: string[]) => string
 	prisma: PrismaMap
+	/** A set of paths for the codegen to work from */
 	settings: {
 		apiServicesPath: string
 		graphQLSchemaPath: string
