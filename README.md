@@ -34,7 +34,7 @@ export const game = ({ id }) => db.game.findUnique({ where: { id } })
 
 This repo will create `.d.ts` files which very accurately, and very concisely represent the runtime for these functions. It's goal is to take all of the possible logic which might happen in the TypeScript type system, and pre-bake that into the output of the .d.ts files.
 
-You could think of it as a smaller, more singular focused version of graphql-codgen.
+You could think of it as a smaller, more singular focused version of the mature and well-featured [graphql-codgen](https://the-guild.dev/graphql/codegen).
 
 ## Vision
 
