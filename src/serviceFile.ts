@@ -3,7 +3,7 @@ import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
 // import { graphql, path, tsMorph } from "./deps.ts"
-import { FieldFacts, ModelResolverFacts, ServiceFacts } from "./typeFacts.js"
+import { FieldFacts, ModelResolverFacts, CodeFacts } from "./typeFacts.js"
 import { typeMapper } from "./typeMap.js"
 import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField, varStartsWithUppercase } from "./utils.js"
 
@@ -19,7 +19,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	const fileKey = file.replace(settings.apiServicesPath, "")
 
 	// const priorFacts = serviceInfo.get(fileKey)
-	const thisFact: ServiceFacts = {}
+	const thisFact: CodeFacts = {}
 
 	const filename = context.basename(file)
 	const fileContents = context.sys.readFile(file)

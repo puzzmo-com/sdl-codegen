@@ -16,8 +16,9 @@ The core idea is to have a codegen tool that can generate `.d.ts` files from Gra
 
 This app will be architected to be a pipeline of sorts. Here's the rough stages:
 
-- Get inputs: GraphQL schema, files which we want to make .d.ts files for, Prisma dmmf and config
-- Parse inputs: Parse the GraphQL schema, parse the files, parse the Prisma dmmf
+- Get inputs: GraphQL schema, the source files to represent, Prisma dmmf and dts output config
+- Parse inputs: Parse the GraphQL schema, parse source files into facts about the code, parse the Prisma dmmf
+- Centralize data: Keep a central store of all of these things, and have specific updaters so that a watcher can be built.
 - Generate outputs: Generate .d.ts files for the files we want to generate them for
 
 ## Development

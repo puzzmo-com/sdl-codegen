@@ -7,7 +7,7 @@ import { Project } from "ts-morph"
 import { AppContext } from "../context.js"
 import { prismaModeller } from "../prismaModeller.js"
 import { lookAtServiceFile } from "../serviceFile.js"
-import type { FieldFacts, ServiceFacts } from "../typeFacts.js"
+import type { FieldFacts, CodeFacts } from "../typeFacts.js"
 
 interface Run {
 	gamesService?: string
@@ -33,7 +33,7 @@ export function getDTSFilesForRun(run: Run) {
 		prisma: prismaModeller(prisma),
 		tsProject: project,
 		fieldFacts: new Map<string, FieldFacts>(),
-		serviceFacts: new Map<string, ServiceFacts>(),
+		serviceFacts: new Map<string, CodeFacts>(),
 		settings: {
 			root: "/",
 			graphQLSchemaPath: "/.redwood/schema.graphql",

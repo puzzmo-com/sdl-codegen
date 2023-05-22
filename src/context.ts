@@ -3,11 +3,11 @@ import * as tsMorph from "ts-morph"
 import { System } from "typescript"
 
 import { PrismaMap } from "./prismaModeller.js"
-import { FieldFacts, ServiceFacts } from "./typeFacts.js"
+import { FieldFacts, CodeFacts } from "./typeFacts.js"
 
 export interface AppContext {
 	basename: (path: string) => string
-	serviceFacts: Map<string, ServiceFacts>
+	serviceFacts: Map<string, CodeFacts>
 	fieldFacts: Map<string, FieldFacts>
 	gql: graphql.GraphQLSchema
 	join: (...paths: string[]) => string

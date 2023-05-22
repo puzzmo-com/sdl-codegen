@@ -7,13 +7,8 @@ export interface FieldFact {
 
 // The data-model for the service file which contains the SDL matched functions
 
-/** A representation of the file itself, containing either  */
-export type ServiceFacts = Record<string, ModelResolverFacts | NotInGQLSchemaResolverFacts>
-
-export interface NotInGQLSchemaResolverFacts {
-	typeName: "__unincluded"
-	resolvers: Map<string, RootResolverFact>
-}
+/** A representation of the code inside the source file's  */
+export type CodeFacts = Record<string, ModelResolverFacts>
 
 export interface ModelResolverFacts {
 	typeName: string
@@ -21,5 +16,16 @@ export interface ModelResolverFacts {
 }
 
 export interface RootResolverFact {
-	resolverName: string
+	/** The name of the fn */
+	name: string
+	/** How many args are defined? */
+	funcArgCount: number
+	/** Is it declared as an async fn */
+	isAsync: boolean
+	/** is 'function abc() {}' */
+	isFunc: boolean
+	/** is 'const abc = () => ...' */
+	isObjLiteral: boolean
+	/** We don't know what declaration is */
+	isUnknown: boolean
 }
