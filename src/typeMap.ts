@@ -42,7 +42,9 @@ export const typeMapper = (context: AppContext, config: { preferPrismaModels?: t
 		// So we can add the | undefined
 		const getInner = () => {
 			if (graphql.isListType(type)) {
-				const typeStr = map(type.ofType, mapConfig)!
+				const typeStr = map(type.ofType, mapConfig)
+				if (!typeStr) return "any"
+
 				if (graphql.isNonNullType(type.ofType)) {
 					return `${typeStr}[]`
 				} else {

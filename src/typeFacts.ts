@@ -11,21 +11,21 @@ export interface FieldFact {
 export type CodeFacts = Record<string, ModelResolverFacts>
 
 export interface ModelResolverFacts {
+	resolvers: Map<string, RootResolverFact>,
 	typeName: string
-	resolvers: Map<string, RootResolverFact>
 }
 
 export interface RootResolverFact {
+	/** How many args are defined? */
+	funcArgCount: number,
+	/** Is it declared as an async fn */
+	isAsync: boolean,
+	/** is 'function abc() {}' */
+	isFunc: boolean,
+	/** is 'const abc = () => ...' */
+	isObjLiteral: boolean,
+	/** We don't know what declaration is */
+	isUnknown: boolean,
 	/** The name of the fn */
 	name: string
-	/** How many args are defined? */
-	funcArgCount: number
-	/** Is it declared as an async fn */
-	isAsync: boolean
-	/** is 'function abc() {}' */
-	isFunc: boolean
-	/** is 'const abc = () => ...' */
-	isObjLiteral: boolean
-	/** We don't know what declaration is */
-	isUnknown: boolean
 }

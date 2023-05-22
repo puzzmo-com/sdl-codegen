@@ -3,15 +3,15 @@ import * as tsMorph from "ts-morph"
 import { System } from "typescript"
 
 import { PrismaMap } from "./prismaModeller.js"
-import { FieldFacts, CodeFacts } from "./typeFacts.js"
+import { CodeFacts,FieldFacts } from "./typeFacts.js"
 
 export interface AppContext {
 	basename: (path: string) => string
-	serviceFacts: Map<string, CodeFacts>
-	fieldFacts: Map<string, FieldFacts>
-	gql: graphql.GraphQLSchema
-	join: (...paths: string[]) => string
-	prisma: PrismaMap
+	fieldFacts: Map<string, FieldFacts>,
+	gql: graphql.GraphQLSchema,
+	join: (...paths: string[]) => string,
+	prisma: PrismaMap,
+	serviceFacts: Map<string, CodeFacts>,
 	settings: {
 		apiServicesPath: string
 		graphQLSchemaPath: string

@@ -10,7 +10,7 @@ import { AppContext } from "./context.js"
 import { PrismaMap, prismaModeller } from "./prismaModeller.js"
 import { lookAtServiceFile } from "./serviceFile.js"
 import { createSharedSchemaFiles } from "./sharedSchema.js"
-import { FieldFacts, CodeFacts } from "./typeFacts.js"
+import { CodeFacts,FieldFacts } from "./typeFacts.js"
 
 export function run(appRoot: string, typesRoot: string, config: { deleteOldGraphQLDTS?: boolean; runESLint?: boolean; sys?: System } = {}) {
 	const sys = config.sys ?? tsSys

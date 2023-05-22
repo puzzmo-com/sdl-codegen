@@ -12,7 +12,7 @@ export const variableDeclarationIsAsync = (vd: tsMorph.VariableDeclaration) => {
 	return res
 }
 
-export const inlineArgsForField = (field: graphql.GraphQLField<any, any>, config: { mapper: TypeMapper["map"] }) => {
+export const inlineArgsForField = (field: graphql.GraphQLField<unknown, unknown>, config: { mapper: TypeMapper["map"] }) => {
 	return field.args.length
 		? // Always use an args obj
 		  `{${field.args
@@ -29,7 +29,7 @@ export const inlineArgsForField = (field: graphql.GraphQLField<any, any>, config
 }
 
 export const createAndReferOrInlineArgsForField = (
-	field: graphql.GraphQLField<any, any>,
+	field: graphql.GraphQLField<unknown, unknown>,
 	config: {
 		file: tsMorph.SourceFile
 		mapper: TypeMapper["map"]

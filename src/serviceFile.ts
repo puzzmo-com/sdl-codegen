@@ -3,7 +3,7 @@ import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
 // import { graphql, path, tsMorph } from "./deps.ts"
-import { FieldFacts, ModelResolverFacts, CodeFacts } from "./typeFacts.js"
+import { CodeFacts, FieldFacts, ModelResolverFacts } from "./typeFacts.js"
 import { typeMapper } from "./typeMap.js"
 import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField, varStartsWithUppercase } from "./utils.js"
 
@@ -34,10 +34,14 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 	const fileDTS = context.tsProject.createSourceFile("/source/index.d.ts", "", { overwrite: true })
 
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const queryType = gql.getQueryType()!
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!queryType) throw new Error("No query type")
 
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const mutationType = gql.getMutationType()!
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!mutationType) throw new Error("No mutation type")
 
 	const externalMapper = typeMapper(context, { preferPrismaModels: true })
@@ -47,8 +51,8 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 	// Add the root function declarations
 	queryResolvers.forEach((v) => {
-		const isQuery = queryType.getFields()[v.getName()]
-		const isMutation = mutationType.getFields()[v.getName()]
+		const isQuery = v.getName() in queryType.getFields()
+		const isMutation = v.getName() in mutationType.getFields()
 		const parentName = isQuery ? queryType.name : isMutation ? mutationType.name : "__unincluded"
 		addTypeForQueryResolver(v.getName(), getResolverInformationForDeclaration(v.getInitializer(), parentName))
 	})
@@ -129,7 +133,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	function addTypeForQueryResolver(name: string, config: ResolverTypeInformation) {
 		let field = queryType.getFields()[name]
 		if (!field) {
-			field = mutationType!.getFields()[name]
+			field = mutationType.getFields()[name]
 		}
 
 		const parentTypeName = config.parentName === queryType.name || config.parentName === mutationType.name ? "object" : config.parentName
@@ -140,7 +144,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 			resolvers: new Map(),
 		}
 
-		fact.resolvers.set(name, { resolverName: name })
+		fact.resolvers.set(name, { name, ...config })
 		thisFact[name] = fact
 
 		if (!field) {

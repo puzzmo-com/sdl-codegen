@@ -2,7 +2,7 @@ import { expect, it } from "vitest"
 
 import { getDTSFilesForRun, graphql, prisma } from "../testRunner"
 
-it("It allows you to add a generic parameter", async () => {
+it("It allows you to add a generic parameter", () => {
 	const prismaSchema = prisma`
 model Game {
     id            Int          @id @default(autoincrement())

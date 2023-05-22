@@ -2,11 +2,45 @@
 
 <p align="center">GraphQL .d.ts file generation for SDL-first projects</p>
 
-## Goals
+This project is for creating the `.d.ts` files for codebases where you have SDL like:
 
-The core idea is to have a codegen tool that can generate `.d.ts` files from GraphQL SDL files. This is useful for projects that use GraphQL SDL files as their source of truth, but still want to have type safety in their codebase. This project won't happen overnight.
+```graphql
+export const schema = gql`
+    type Game {
+        id: ID!
+        homeTeamID: Int!
+        awayTeamID: Int!
+        homeTeamScore: Int!
+        awayTeamScore: Int!
+    }
 
-**Step one** is here: https://github.com/orta/redwood-codegen-api-types/tree/main#how-to-use-this-in-a-redwood-project
+    type Query {
+        games: [Game!]! @skipAuth
+        upcomingGames: [Game!]! @skipAuth
+        game(id: ID!): Game @requireAuth
+    }
+`
+```
+
+Then separately, you write functions like:
+
+```ts
+export const games = () => db.game.findMany({ orderBy: { startDateTime: "asc" } })
+
+export const upcomingGames = () => db.game.findMany({ isCompleted: false, startDateTime: { gt: new Date() } })
+
+export const game = ({ id }) => db.game.findUnique({ where: { id } })
+```
+
+This repo will create `.d.ts` files which very accurately, and very concisely represent the runtime for these functions. It's goal is to take all of the possible logic which might happen in the TypeScript type system, and pre-bake that into the output of the .d.ts files.
+
+You could think of it as a smaller, more singular focused version of graphql-codgen.
+
+## Vision
+
+This repo provides the APIs for building a codegen for framework authors, and the goal is not to provide a CLI for a generalized use-case.
+
+**Step one** is here (which is a CLi you can use): https://github.com/orta/redwood-codegen-api-types/tree/main#how-to-use-this-in-a-redwood-project
 
 **Step two** is to take the above and to start making it more generalized, but to still make it work well with RedwoodJS.
 
@@ -14,12 +48,14 @@ The core idea is to have a codegen tool that can generate `.d.ts` files from Gra
 
 ## Pipeline
 
-This app will be architected to be a pipeline of sorts. Here's the rough stages:
+This app is architected as a pipeline of sorts. Here's the rough stages:
 
 - Get inputs: GraphQL schema, the source files to represent, Prisma dmmf and dts output config
 - Parse inputs: Parse the GraphQL schema, parse source files into facts about the code, parse the Prisma dmmf
 - Centralize data: Keep a central store of all of these things, and have specific updaters so that a watcher can be built.
 - Generate outputs: Generate .d.ts files for the files we want to generate them for
+
+It's still a bit of a work in progress to have these discrete steps, but it's getting there.
 
 ## Development
 

@@ -34,7 +34,13 @@ it("reads a service file", () => {
 		{
 		  "resolvers": Map {
 		    "game" => {
-		      "resolverName": "game",
+		      "funcArgCount": 0,
+		      "isAsync": false,
+		      "isFunc": true,
+		      "isObjLiteral": false,
+		      "isUnknown": false,
+		      "name": "game",
+		      "parentName": "__unincluded",
 		    },
 		  },
 		  "typeName": "__unincluded",

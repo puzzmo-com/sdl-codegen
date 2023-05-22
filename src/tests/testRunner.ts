@@ -7,7 +7,7 @@ import { Project } from "ts-morph"
 import { AppContext } from "../context.js"
 import { prismaModeller } from "../prismaModeller.js"
 import { lookAtServiceFile } from "../serviceFile.js"
-import type { FieldFacts, CodeFacts } from "../typeFacts.js"
+import type { CodeFacts, FieldFacts } from "../typeFacts.js"
 
 interface Run {
 	gamesService?: string

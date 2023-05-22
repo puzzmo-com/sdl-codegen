@@ -10,6 +10,6 @@
 		"strict": true,
 		"target": "ES2021"
 	},
-	"include": ["src"],
-	"exclude": ["node_modules", "src/tests/vendor"]
+	"exclude": ["node_modules", "src/tests/vendor"],
+	"include": ["src"]
 }

@@ -2,7 +2,7 @@ import { expect, it } from "vitest"
 
 import { getDTSFilesForRun, graphql, prisma } from "../testRunner"
 
-it("uses a rn to promise when we see an async tag", async (t) => {
+it("uses a rn to promise when we see an async tag", () => {
 	const prismaSchema = prisma`
 model Game {
     id            Int          @id @default(autoincrement())
