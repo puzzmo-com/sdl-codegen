@@ -4,6 +4,7 @@ import * as tsMorph from "ts-morph"
 import { TypeMapper } from "./typeMap.js"
 
 export const varStartsWithUppercase = (v: tsMorph.VariableDeclaration) => v.getName()[0].startsWith(v.getName()[0].toUpperCase())
+export const nameDoesNotStartsWithUnderscore = (v: tsMorph.VariableDeclaration) => !v.getName()[0].startsWith("_")
 
 export const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str.slice(1)
 

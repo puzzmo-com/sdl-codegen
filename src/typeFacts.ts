@@ -8,24 +8,28 @@ export interface FieldFact {
 // The data-model for the service file which contains the SDL matched functions
 
 /** A representation of the code inside the source file's  */
-export type CodeFacts = Record<string, ModelResolverFacts>
+export type CodeFacts = Record<string, ModelResolverFacts | undefined>
 
 export interface ModelResolverFacts {
-	resolvers: Map<string, RootResolverFact>,
-	typeName: string
+	/** Should we type the type as a generic with an override  */
+	hasGenericArg: boolean
+	/** Individual resolvers found for this model */
+	resolvers: Map<string, ResolverFuncFact>
+	/** The name (or lack of) for the GraphQL type which we are mapping  */
+	typeName: string | "maybe_query_mutation"
 }
 
-export interface RootResolverFact {
+export interface ResolverFuncFact {
 	/** How many args are defined? */
-	funcArgCount: number,
+	funcArgCount: number
 	/** Is it declared as an async fn */
-	isAsync: boolean,
+	isAsync: boolean
 	/** is 'function abc() {}' */
-	isFunc: boolean,
-	/** is 'const abc = () => ...' */
-	isObjLiteral: boolean,
+	isFunc: boolean
+	/** is 'const ABC = {}' */
+	isObjLiteral: boolean
 	/** We don't know what declaration is */
-	isUnknown: boolean,
+	isUnknown: boolean
 	/** The name of the fn */
 	name: string
 }

@@ -1,6 +1,7 @@
+import { readFileSync } from "fs"
 import { expect, it } from "vitest"
 
-import { lookAtServiceFile } from "../serviceFile"
+import { getCodeFactsForJSTSFileAtPath, lookAtServiceFile } from "../serviceFile"
 import { getDTSFilesForRun } from "./testRunner"
 
 it("reads a service file", () => {
@@ -8,8 +9,9 @@ it("reads a service file", () => {
 
 	vfsMap.set(
 		"/api/src/services/example.ts",
-		`export const game = () => {}
-         export function game2() {}
+		`
+export const game = () => {}
+export function game2() {}
     `
 	)
 
@@ -17,33 +19,76 @@ it("reads a service file", () => {
 	lookAtServiceFile("/api/src/services/example.ts", appContext)
 
 	expect(vfsMap.has("/types/example.d.ts")).toBeTruthy()
+})
 
-	// Should include facts about the file
-	expect([...appContext.serviceFacts.keys()]).toMatchInlineSnapshot(`
-		[
-		  "/example.ts",
-		]
-	`)
+it("generates useful service facts from a (truncated) real file", () => {
+	const { appContext, vfsMap } = getDTSFilesForRun({})
 
-	// Eventually this should include game2 also
-	const facts = appContext.serviceFacts.get("/example.ts")!
-	expect(Object.keys(facts).join(" | ")).toMatchInlineSnapshot('"game"')
+	vfsMap.set("/api/src/services/userProfile.ts", readFileSync("./src/tests/vendor/puzzmo/one-offs/userProfiles.ts", "utf8"))
 
-	// Generates some useful facts
-	expect(facts.game).toMatchInlineSnapshot(`
+	const facts = getCodeFactsForJSTSFileAtPath("/api/src/services/userProfile.ts", appContext)
+	expect(facts).toMatchInlineSnapshot(`
 		{
-		  "resolvers": Map {
-		    "game" => {
-		      "funcArgCount": 0,
-		      "isAsync": false,
-		      "isFunc": true,
-		      "isObjLiteral": false,
-		      "isUnknown": false,
-		      "name": "game",
-		      "parentName": "__unincluded",
+		  "UserProfile": {
+		    "hasGenericArg": false,
+		    "resolvers": Map {
+		      "id" => {
+		        "funcArgCount": 2,
+		        "isAsync": false,
+		        "isFunc": true,
+		        "isObjLiteral": false,
+		        "isUnknown": false,
+		        "name": "id",
+		      },
+		      "user" => {
+		        "funcArgCount": 2,
+		        "isAsync": false,
+		        "isFunc": true,
+		        "isObjLiteral": false,
+		        "isUnknown": false,
+		        "name": "user",
+		      },
 		    },
+		    "typeName": "UserProfile",
 		  },
-		  "typeName": "__unincluded",
+		  "maybe_query_mutation": {
+		    "hasGenericArg": false,
+		    "resolvers": Map {
+		      "updateUserProfile" => {
+		        "funcArgCount": 1,
+		        "isAsync": false,
+		        "isFunc": true,
+		        "isObjLiteral": false,
+		        "isUnknown": false,
+		        "name": "updateUserProfile",
+		      },
+		      "addLeaderboardToUserProfile" => {
+		        "funcArgCount": 1,
+		        "isAsync": true,
+		        "isFunc": true,
+		        "isObjLiteral": false,
+		        "isUnknown": false,
+		        "name": "addLeaderboardToUserProfile",
+		      },
+		      "removeLeaderboardFromUserProfile" => {
+		        "funcArgCount": 1,
+		        "isAsync": true,
+		        "isFunc": true,
+		        "isObjLiteral": false,
+		        "isUnknown": false,
+		        "name": "removeLeaderboardFromUserProfile",
+		      },
+		      "deleteUserProfile" => {
+		        "funcArgCount": 1,
+		        "isAsync": false,
+		        "isFunc": true,
+		        "isObjLiteral": false,
+		        "isUnknown": false,
+		        "name": "deleteUserProfile",
+		      },
+		    },
+		    "typeName": "maybe_query_mutation",
+		  },
 		}
 	`)
 })

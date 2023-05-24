@@ -39,6 +39,7 @@ export const prismaModeller = (schema: PrismaSchemaBlocks) => {
 					leadingFieldComments.push(p.text.replace("/// ", "").replace("// ", ""))
 				} else if (p.type === "break") {
 					leadingFieldComments.push("")
+					// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 				} else if (p.type === "attribute" || p.type === "field") {
 					properties.set(p.name, {
 						leadingComments: leadingFieldComments.join("\n"),
@@ -53,7 +54,6 @@ export const prismaModeller = (schema: PrismaSchemaBlocks) => {
 				leadingComments: leadingComments.join("\n"),
 			})
 
-			//   console.log(b.name, [...properties.keys()]);
 			leadingComments = []
 		}
 	})

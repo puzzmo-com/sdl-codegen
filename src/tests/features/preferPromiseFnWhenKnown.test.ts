@@ -57,27 +57,27 @@ export const Game = {
 
 		/** SDL: gameSync: Game */
 		export interface GameSyncResolver {
-		  (args?: object, obj?: { root: object, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
+		  (args?: object, obj?: { root: undefined, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
 
 		/** SDL: gameAsync: Game */
 		export interface GameAsyncResolver {
-		  (args?: object, obj?: { root: object, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): Promise<RTGame | null>;
+		  (args?: object, obj?: { root: undefined, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): Promise<RTGame | null>;
 		}
 
 		/** SDL: gameAsync1Arg: Game */
 		export interface GameAsync1ArgResolver {
-		  (args: object, obj?: { root: object, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
+		  (args: object, obj?: { root: undefined, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
 
 		/** SDL: gameAsync2Arg: Game */
 		export interface GameAsync2ArgResolver {
-		  (args: object, obj: { root: object, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
+		  (args: object, obj: { root: undefined, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
 
 		/** SDL: gameObj: Game */
 		export interface GameObjResolver {
-		  (args?: object, obj?: { root: object, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null;
+		  (args?: object, obj?: { root: undefined, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null;
 		}
 
 		type GameAsParent<Extended> = PGame & {

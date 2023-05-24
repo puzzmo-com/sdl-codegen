@@ -48,7 +48,7 @@ export const Game = {
 
 		/** SDL: game: Game */
 		export interface GameResolver {
-		  (args?: object, obj?: { root: object, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
+		  (args?: object, obj?: { root: undefined, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
 
 		type GameAsParent = PGame & { summary: () => Promise<string> };

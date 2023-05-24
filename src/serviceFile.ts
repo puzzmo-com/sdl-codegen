@@ -2,10 +2,10 @@ import * as graphql from "graphql"
 import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
-// import { graphql, path, tsMorph } from "./deps.ts"
-import { CodeFacts, FieldFacts, ModelResolverFacts } from "./typeFacts.js"
+import { getCodeFactsForJSTSFileAtPath } from "./serviceFile.codefacts.js"
+import { CodeFacts, FieldFacts, ModelResolverFacts, ResolverFuncFact } from "./typeFacts.js"
 import { typeMapper } from "./typeMap.js"
-import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField, varStartsWithUppercase } from "./utils.js"
+import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField } from "./utils.js"
 
 export const lookAtServiceFile = (file: string, context: AppContext) => {
 	const { gql, prisma, settings, serviceFacts } = context
@@ -22,17 +22,6 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	const thisFact: CodeFacts = {}
 
 	const filename = context.basename(file)
-	const fileContents = context.sys.readFile(file)
-	const referenceFileSourceFile = context.tsProject.createSourceFile(`/source/${fileKey}`, fileContents)
-
-	const vars = referenceFileSourceFile.getVariableDeclarations().filter((v) => v.isExported())
-
-	const resolverContainers = vars.filter(varStartsWithUppercase)
-
-	// TODO: Check this is everything, you can define a resolver via function or arrows
-	const queryResolvers = vars.filter((v) => !varStartsWithUppercase(v))
-
-	const fileDTS = context.tsProject.createSourceFile("/source/index.d.ts", "", { overwrite: true })
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const queryType = gql.getQueryType()!
@@ -47,20 +36,41 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	const externalMapper = typeMapper(context, { preferPrismaModels: true })
 	const returnTypeMapper = typeMapper(context, {})
 
+	const fileFacts = getCodeFactsForJSTSFileAtPath(file, context)
+
 	const extraPrismaReferences = new Set<string>()
 
+	const fileDTS = context.tsProject.createSourceFile(`source/${fileKey}.d.ts`, "", { overwrite: true })
+
+	const rootResolvers = fileFacts.maybe_query_mutation?.resolvers
+
 	// Add the root function declarations
-	queryResolvers.forEach((v) => {
-		const isQuery = v.getName() in queryType.getFields()
-		const isMutation = v.getName() in mutationType.getFields()
-		const parentName = isQuery ? queryType.name : isMutation ? mutationType.name : "__unincluded"
-		addTypeForQueryResolver(v.getName(), getResolverInformationForDeclaration(v.getInitializer(), parentName))
+	if (rootResolvers)
+		rootResolvers.forEach((v) => {
+			const isQuery = v.name in queryType.getFields()
+			const isMutation = v.name in mutationType.getFields()
+			const parentName = isQuery ? queryType.name : isMutation ? mutationType.name : undefined
+			if (parentName) {
+				addDefinitionsForTopLevelResolvers(parentName, v)
+			} else {
+				// Add warning about unused resolver
+				fileDTS.addStatements(`\n// ${v.name} does not exist on Query or Mutation`)
+			}
+		})
+
+	// Add the root function declarations
+	Object.keys(fileFacts).forEach((modelName) => {
+		if (modelName === "maybe_query_mutation") return
+
+		const facts = fileFacts.modelName
+		if (!facts) return
+		addDefinitionsForTopLevelResolvers(facts.typeName, facts)
 	})
 
 	// Next all the capital consts
-	resolverContainers.forEach((c) => {
-		addCustomTypeResolvers(c, {})
-	})
+	// resolverContainers.forEach((c) => {
+	// 	addCustomTypeResolvers(c, {})
+	// })
 
 	const sharedGraphQLObjectsReferenced = externalMapper.getReferencedGraphQLThingsInMapping()
 	if (sharedGraphQLObjectsReferenced.types.length) {
@@ -130,32 +140,15 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	context.sys.writeFile(context.join(context.settings.typesFolderRoot, dtsFilename), fileDTS.getText())
 	return
 
-	function addTypeForQueryResolver(name: string, config: ResolverTypeInformation) {
+	function addDefinitionsForTopLevelResolvers(parentName: string, config: ResolverFuncFact) {
+		const { name } = config
 		let field = queryType.getFields()[name]
 		if (!field) {
 			field = mutationType.getFields()[name]
 		}
 
-		const parentTypeName = config.parentName === queryType.name || config.parentName === mutationType.name ? "object" : config.parentName
-
-		// Start making facts about the services
-		const fact: ModelResolverFacts = thisFact[name] || {
-			typeName: parentTypeName,
-			resolvers: new Map(),
-		}
-
-		fact.resolvers.set(name, { name, ...config })
-		thisFact[name] = fact
-
-		if (!field) {
-			fileDTS.addStatements(`\n// ${name} does not exist on Query or Mutation`)
-			return
-		}
-
-		// if (!field) throw new Error(`No field named ${name} on Query`)
-
 		const interfaceDeclaration = fileDTS.addInterface({
-			name: `${capitalizeFirstLetter(name)}Resolver`,
+			name: `${capitalizeFirstLetter(parentName)}Resolver`,
 			isExported: true,
 			docs: ["SDL: " + graphql.print(field.astNode!)],
 		})
@@ -183,7 +176,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 				{ name: "args", type: argsParam, hasQuestionToken: config.funcArgCount < 1 },
 				{
 					name: "obj",
-					type: `{ root: ${parentTypeName}, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }`,
+					type: `{ root: ${parentName}, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }`,
 					hasQuestionToken: config.funcArgCount < 2,
 				},
 			],
@@ -191,49 +184,16 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		})
 	}
 
-	function addCustomTypeResolvers(variableDeclaration: tsMorph.VariableDeclaration, config: {}) {
-		const declarations = variableDeclaration.getVariableStatementOrThrow().getDeclarations()
-
-		declarations.forEach((d) => {
-			const name = d.getName()
+	function addCustomTypeResolvers(config: ModelResolverFacts) {
+		const modelName  = config.typeName
+		// config.resolvers.forEach((resolver) => {
+			// const { name } = resolver
 			// only do it if the first letter is a capital
-			if (!name.match(/^[A-Z]/)) return
-
-			const type = d.getType()
-			const hasGenericArgs = type.getText().includes("<")
-			const fieldFacts: FieldFacts = {}
-
-			// Grab the const Thing = { ... }
-			const obj = d.getFirstDescendantByKind(tsMorph.SyntaxKind.ObjectLiteralExpression)
-			if (!obj) {
-				throw new Error(`Could not find an object literal ( e.g. a { } ) in ${d.getName()}`)
-			}
-
-			// Get a list of the defined keys
-			const keys: { info: ResolverTypeInformation; name: string }[] = []
-			obj.getProperties().forEach((p) => {
-				if (p.isKind(tsMorph.SyntaxKind.SpreadAssignment)) {
-					return
-				}
-
-				// keys.push({ name: p.getName(), info:  });
-
-				if (p.isKind(tsMorph.SyntaxKind.PropertyAssignment) && p.hasInitializer()) {
-					const name = p.getName()
-					keys.push({ name, info: getResolverInformationForDeclaration(p.getInitializerOrThrow(), name) })
-				}
-
-				if (p.isKind(tsMorph.SyntaxKind.FunctionDeclaration) && p.getName()) {
-					const name = p.getName()
-					// @ts-expect-error - lets let this go for now
-					keys.push({ name, info: getResolverInformationForDeclaration(p, name) })
-				}
-			})
 
 			// Make an interface
 
 			// Account: MergePrismaWithSdlTypes<PrismaAccount, MakeRelationsOptional<Account, AllMappedModels>, AllMappedModels>;
-			const gqlType = gql.getType(d.getName())
+			const gqlType = gql.getType(modelName)
 			if (!gqlType) {
 				// throw new Error(`Could not find a GraphQL type named ${d.getName()}`);
 				fileDTS.addStatements(`\n// ${d.getName()} does not exist in the schema`)
@@ -315,70 +275,5 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 			context.fieldFacts.set(d.getName(), fieldFacts)
 		})
-	}
-}
-
-interface ResolverTypeInformation {
-	funcArgCount: number
-	isAsync: boolean
-	isFunc: boolean
-	isObjLiteral: boolean
-	isUnknown: boolean
-	parentName: string
-}
-
-const getResolverInformationForDeclaration = (initialiser: tsMorph.Expression | undefined, parentName: string): ResolverTypeInformation => {
-	// Who knows what folks could do, lets not crash
-	if (!initialiser) {
-		return {
-			parentName,
-			funcArgCount: 0,
-			isFunc: false,
-			isAsync: false,
-			isUnknown: true,
-			isObjLiteral: false,
-		}
-	}
-
-	// resolver is a fn
-	if (initialiser.isKind(tsMorph.SyntaxKind.ArrowFunction) || initialiser.isKind(tsMorph.SyntaxKind.FunctionExpression)) {
-		return {
-			parentName,
-			funcArgCount: initialiser.getParameters().length,
-			isFunc: true,
-			isAsync: initialiser.isAsync(),
-			isUnknown: false,
-			isObjLiteral: false,
-		}
-	}
-
-	// resolver is a raw obj
-	if (
-		initialiser.isKind(tsMorph.SyntaxKind.ObjectLiteralExpression) ||
-		initialiser.isKind(tsMorph.SyntaxKind.StringLiteral) ||
-		initialiser.isKind(tsMorph.SyntaxKind.NumericLiteral) ||
-		initialiser.isKind(tsMorph.SyntaxKind.TrueKeyword) ||
-		initialiser.isKind(tsMorph.SyntaxKind.FalseKeyword) ||
-		initialiser.isKind(tsMorph.SyntaxKind.NullKeyword) ||
-		initialiser.isKind(tsMorph.SyntaxKind.UndefinedKeyword)
-	) {
-		return {
-			parentName,
-			funcArgCount: 0,
-			isFunc: false,
-			isAsync: false,
-			isUnknown: false,
-			isObjLiteral: true,
-		}
-	}
-
-	// who knows
-	return {
-		parentName,
-		funcArgCount: 0,
-		isFunc: false,
-		isAsync: false,
-		isUnknown: true,
-		isObjLiteral: false,
 	}
 }
