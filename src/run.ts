@@ -4,7 +4,7 @@ import { basename, join } from "node:path"
 import { getSchema as getPrismaSchema } from "@mrleebo/prisma-ast"
 import * as graphql from "graphql"
 import { Project } from "ts-morph"
-import * as typescript from "typescript"
+import typescript from "typescript"
 
 import { AppContext } from "./context.js"
 import { PrismaMap, prismaModeller } from "./prismaModeller.js"

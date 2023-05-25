@@ -34,6 +34,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 	// The description of the source file
 	const fileFacts = getCodeFactsForJSTSFileAtPath(file, context)
+	if (Object.keys(fileFacts).length === 0) return
 
 	// Tracks prospective prisma models which are used in the file
 	const extraPrismaReferences = new Set<string>()
@@ -105,8 +106,8 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		]),
 	]
 
-	if (prismases.length) {
-		const validPrismaObjs = prismases.filter((p) => prisma.has(p))
+	const validPrismaObjs = prismases.filter((p) => prisma.has(p))
+	if (validPrismaObjs.length) {
 		fileDTS.addImportDeclaration({
 			isTypeOnly: true,
 			moduleSpecifier: "@prisma/client",

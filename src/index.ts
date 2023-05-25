@@ -1,7 +1,7 @@
 import { getSchema as getPrismaSchema } from "@mrleebo/prisma-ast"
 import * as graphql from "graphql"
 import { Project } from "ts-morph"
-import * as typescript from "typescript"
+import typescript from "typescript"
 
 import { AppContext } from "./context.js"
 import { PrismaMap, prismaModeller } from "./prismaModeller.js"
@@ -13,7 +13,7 @@ import { RedwoodPaths } from "./types.js"
 export * from "./main.js"
 export * from "./types.js"
 
-import { basename, join } from "path"
+import { basename, join } from "node:path"
 
 /** The API specifically for Redwood */
 export function runFullCodegen(preset: "redwood", config: { paths: RedwoodPaths }): { paths: string[] }
@@ -70,25 +70,12 @@ export function runFullCodegen(preset: string, config: unknown): { paths: string
 	}
 
 	// TODO: Maybe Redwood has an API for this? Its grabbing all the services
-	const serviceFilesToLookAt = [] as string[]
-	for (const dirEntry of appContext.sys.readDirectory(appContext.pathSettings.apiServicesPath)) {
-		// These are generally the folders
-		if (appContext.sys.directoryExists(dirEntry)) {
-			const folderPath = join(appContext.pathSettings.apiServicesPath, dirEntry)
-			// And these are the files in them
-			for (const subdirEntry of appContext.sys.readDirectory(folderPath)) {
-				const folderPath = join(appContext.pathSettings.apiServicesPath, dirEntry)
-				if (
-					appContext.sys.fileExists(folderPath) &&
-					subdirEntry.endsWith(".ts") &&
-					!subdirEntry.includes(".test.ts") &&
-					!subdirEntry.includes("scenarios.ts")
-				) {
-					serviceFilesToLookAt.push(join(folderPath, subdirEntry))
-				}
-			}
-		}
-	}
+	const serviceFiles = appContext.sys.readDirectory(appContext.pathSettings.apiServicesPath)
+	const serviceFilesToLookAt = serviceFiles.filter((file) => {
+		if (file.endsWith(".test.ts")) return false
+		if (file.endsWith("scenarios.ts")) return false
+		return file.endsWith(".ts") || file.endsWith(".tsx") || file.endsWith(".js")
+	})
 
 	const filepaths = [] as string[]
 
@@ -99,7 +86,7 @@ export function runFullCodegen(preset: string, config: unknown): { paths: string
 	// This needs to go first, as it sets up fieldFacts
 	for (const path of serviceFilesToLookAt) {
 		const dts = lookAtServiceFile(path, appContext)
-		filepaths.push(dts)
+		if (dts) filepaths.push(dts)
 	}
 
 	return {
