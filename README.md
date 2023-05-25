@@ -42,9 +42,9 @@ This repo provides the APIs for building a codegen for framework authors, and th
 
 **Step one** is here (which is a CLi you can use): https://github.com/orta/redwood-codegen-api-types/tree/main#how-to-use-this-in-a-redwood-project
 
-**Step two** is to take the above and to start making it more generalized, but to still make it work well with RedwoodJS.
+**Step two** is to take the above and to start making it more generalized, but to still make it work well with RedwoodJS. **We are currently here.**
 
-**Step three** will be to make Redwood just a config option.
+**Step three** will be to make Redwood just a config option, Prisma support be some sort of plugin/option, and welcome folks who want to use this for other projects.
 
 ## Pipeline
 
