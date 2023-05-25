@@ -41,23 +41,24 @@ export const Game = {
 
 	expect(dts.trimStart()).toMatchInlineSnapshot(
 		`
-		"import type { Game as RTGame } from \\"./shared-return-types\\";
+		"import type { Query } from \\"./shared-schema-types\\";
+		import type { Game as RTGame } from \\"./shared-return-types\\";
 		import type { Game as PGame } from \\"@prisma/client\\";
 		import type { GraphQLResolveInfo } from \\"graphql\\";
 		import type { RedwoodGraphQLContext } from \\"@redwoodjs/graphql-server/dist/functions/types\\";
 
 		/** SDL: game: Game */
 		export interface GameResolver {
-		  (args?: object, obj?: { root: object, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
+		  (args?: object, obj?: { root: Query, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
-
-		type GameAsParent = PGame & { summary: () => Promise<string> };
 
 		export interface GameTypeResolvers {
 
 		  /** SDL: summary: String! */
 		  summary: (args: undefined, obj: { root: GameAsParent, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }) => string | Promise<string> | (() => Promise<string>);
 		}
+
+		type GameAsParent = PGame & { summary: () => string | Promise<string> | (() => Promise<string>) };
 		"
 	`
 	)

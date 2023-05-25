@@ -20,14 +20,17 @@
 		"build": "tsc",
 		"format": "prettier \"**/*\" --ignore-unknown",
 		"format:write": "pnpm format --write",
+		"jest": "vitest",
 		"lint": "eslint . --max-warnings 0 --report-unused-disable-directives",
 		"lint:knip": "knip",
 		"lint:md": "markdownlint \"**/*.md\" \".github/**/*.md\" --rules sentences-per-line",
 		"lint:package": "npmPkgJsonLint .",
 		"lint:packages": "pnpm-deduplicate --list",
 		"lint:spelling": "cspell \"**\" \".github/**/*\"",
+		"lint:tsc": "tsc --noEmit",
 		"prepare": "husky install",
 		"should-semantic-release": "should-semantic-release --verbose",
+		"test": "vitest",
 		"type-check": "tsc --noEmit"
 	},
 	"lint-staged": {

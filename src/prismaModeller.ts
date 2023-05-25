@@ -53,7 +53,6 @@ export const prismaModeller = (schema: PrismaSchemaBlocks) => {
 				leadingComments: leadingComments.join("\n"),
 			})
 
-			//   console.log(b.name, [...properties.keys()]);
 			leadingComments = []
 		}
 	})
