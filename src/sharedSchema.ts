@@ -19,7 +19,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 	const { prisma, fieldFacts } = context
 	const mapper = typeMapper(context, {})
 
-	const externalTSFile = context.tsProject.createSourceFile(`/source/${context.settings.sharedFilename}`, "")
+	const externalTSFile = context.tsProject.createSourceFile(`/source/${context.pathSettings.sharedFilename}`, "")
 
 	Object.keys(types).forEach((name) => {
 		if (name.startsWith("__")) {
@@ -106,7 +106,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 
 	externalTSFile.formatText({ indentSize: 2 })
 
-	context.sys.writeFile(context.join(context.settings.typesFolderRoot, context.settings.sharedFilename), externalTSFile.getText())
+	context.sys.writeFile(context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename), externalTSFile.getText())
 }
 
 function createSharedReturnPositionSchemaFile(context: AppContext) {
@@ -118,7 +118,7 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 	const knownPrimitives = ["String", "Boolean", "Int"]
 
 	const externalTSFile = context.tsProject.createSourceFile(
-		`/source/${context.settings.sharedInternalFilename}`,
+		`/source/${context.pathSettings.sharedInternalFilename}`,
 		`
 // You may very reasonably ask yourself, 'what is this file?' and why do I need it.
 
@@ -221,6 +221,6 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 
 	externalTSFile.formatText({ indentSize: 2 })
 
-	const filePath = context.join(context.settings.typesFolderRoot, context.settings.sharedInternalFilename)
+	const filePath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedInternalFilename)
 	context.sys.writeFile(filePath, externalTSFile.getText())
 }

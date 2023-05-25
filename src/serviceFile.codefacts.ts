@@ -5,7 +5,7 @@ import { CodeFacts, ModelResolverFacts, ResolverFuncFact } from "./typeFacts.js"
 import { varStartsWithUppercase } from "./utils.js"
 
 export const getCodeFactsForJSTSFileAtPath = (file: string, context: AppContext) => {
-	const { settings } = context
+	const { pathSettings: settings } = context
 	const fileKey = file.replace(settings.apiServicesPath, "")
 
 	// const priorFacts = serviceInfo.get(fileKey)

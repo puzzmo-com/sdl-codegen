@@ -34,7 +34,7 @@ export function getDTSFilesForRun(run: Run) {
 		tsProject: project,
 		fieldFacts: new Map<string, FieldFacts>(),
 		codeFacts: new Map<string, CodeFacts>(),
-		settings: {
+		pathSettings: {
 			root: "/",
 			graphQLSchemaPath: "/.redwood/schema.graphql",
 			apiServicesPath: "/api/src/services",

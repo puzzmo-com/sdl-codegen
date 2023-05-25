@@ -7,7 +7,7 @@ import { TypeMapper, typeMapper } from "./typeMap.js"
 import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField } from "./utils.js"
 
 export const lookAtServiceFile = (file: string, context: AppContext) => {
-	const { gql, prisma, settings, codeFacts: serviceFacts, fieldFacts } = context
+	const { gql, prisma, pathSettings: settings, codeFacts: serviceFacts, fieldFacts } = context
 
 	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!gql) throw new Error(`No schema when wanting to look at service file: ${file}`)
@@ -134,7 +134,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 	const dtsFilename = filename.endsWith(".ts") ? filename.replace(".ts", ".d.ts") : filename.replace(".js", ".d.ts")
 	fileDTS.formatText({ indentSize: 2 })
-	context.sys.writeFile(context.join(context.settings.typesFolderRoot, dtsFilename), fileDTS.getText())
+	context.sys.writeFile(context.join(context.pathSettings.typesFolderRoot, dtsFilename), fileDTS.getText())
 	return
 
 	function addDefinitionsForTopLevelResolvers(parentName: string, config: ResolverFuncFact) {

@@ -17,21 +17,21 @@ export function run(appRoot: string, typesRoot: string, config: { deleteOldGraph
 	const project = new Project({ useInMemoryFileSystem: true })
 
 	let gqlSchema: graphql.GraphQLSchema | undefined
-	const getGraphQLSDLFromFile = (settings: AppContext["settings"]) => {
+	const getGraphQLSDLFromFile = (settings: AppContext["pathSettings"]) => {
 		const schema = sys.readFile(settings.graphQLSchemaPath)
 		if (!schema) throw new Error("No schema found at " + settings.graphQLSchemaPath)
 		gqlSchema = graphql.buildSchema(schema)
 	}
 
 	let prismaSchema: PrismaMap = new Map()
-	const getPrismaSchemaFromFile = (settings: AppContext["settings"]) => {
+	const getPrismaSchemaFromFile = (settings: AppContext["pathSettings"]) => {
 		const prismaSchemaText = sys.readFile(settings.prismaDSLPath)
 		if (!prismaSchemaText) throw new Error("No prisma file found at " + settings.prismaDSLPath)
 		const prismaSchemaBlocks = getPrismaSchema(prismaSchemaText)
 		prismaSchema = prismaModeller(prismaSchemaBlocks)
 	}
 
-	const settings: AppContext["settings"] = {
+	const settings: AppContext["pathSettings"] = {
 		root: appRoot,
 		graphQLSchemaPath: join(appRoot, ".redwood", "schema.graphql"),
 		apiServicesPath: join(appRoot, "api", "src", "services"),
@@ -52,20 +52,20 @@ export function run(appRoot: string, typesRoot: string, config: { deleteOldGraph
 		tsProject: project,
 		codeFacts: new Map<string, CodeFacts>(),
 		fieldFacts: new Map<string, FieldFacts>(),
-		settings,
+		pathSettings: settings,
 		sys,
 		join,
 		basename,
 	}
 
 	const serviceFilesToLookAt = [] as string[]
-	for (const dirEntry of sys.readDirectory(appContext.settings.apiServicesPath)) {
+	for (const dirEntry of sys.readDirectory(appContext.pathSettings.apiServicesPath)) {
 		// These are generally the folders
 		if (sys.directoryExists(dirEntry)) {
-			const folderPath = join(appContext.settings.apiServicesPath, dirEntry)
+			const folderPath = join(appContext.pathSettings.apiServicesPath, dirEntry)
 			// And these are the files in them
 			for (const subdirEntry of sys.readDirectory(folderPath)) {
-				const folderPath = join(appContext.settings.apiServicesPath, dirEntry)
+				const folderPath = join(appContext.pathSettings.apiServicesPath, dirEntry)
 				if (
 					sys.fileExists(folderPath) &&
 					subdirEntry.endsWith(".ts") &&
@@ -79,8 +79,8 @@ export function run(appRoot: string, typesRoot: string, config: { deleteOldGraph
 	}
 
 	// empty the types folder
-	for (const dirEntry of sys.readDirectory(appContext.settings.typesFolderRoot)) {
-		const fileToDelete = join(appContext.settings.typesFolderRoot, dirEntry)
+	for (const dirEntry of sys.readDirectory(appContext.pathSettings.typesFolderRoot)) {
+		const fileToDelete = join(appContext.pathSettings.typesFolderRoot, dirEntry)
 		if (sys.deleteFile && sys.fileExists(fileToDelete)) {
 			sys.deleteFile(fileToDelete)
 		}
@@ -92,7 +92,7 @@ export function run(appRoot: string, typesRoot: string, config: { deleteOldGraph
 	}
 
 	createSharedSchemaFiles(appContext)
-	console.log(`Updated`, typesRoot)
+	// console.log(`Updated`, typesRoot)
 
 	if (config.runESLint) {
 		// console.log("Running ESLint...")

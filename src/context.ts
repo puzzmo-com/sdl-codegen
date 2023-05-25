@@ -18,11 +18,8 @@ export interface AppContext {
 	gql: graphql.GraphQLSchema
 	/** POSXIY- fn not built into System */
 	join: (...paths: string[]) => string
-	/** A map of prisma models */
-	prisma: PrismaMap
-
-	/** Maybe this could be pathSettings instead? */
-	settings: {
+	/** Where to find particular files */
+	pathSettings: {
 		apiServicesPath: string
 		graphQLSchemaPath: string
 		prismaDSLPath: string
@@ -31,6 +28,9 @@ export interface AppContext {
 		sharedInternalFilename: string
 		typesFolderRoot: string
 	}
+
+	/** A map of prisma models */
+	prisma: PrismaMap
 	/** An implementation of the TypeScript system, this can be grabbed pretty
 	 * easily from the typescript import, or you can use your own like tsvfs in browsers.
 	 */
