@@ -10,10 +10,10 @@ import { AppContext } from "./context.js"
 import { PrismaMap, prismaModeller } from "./prismaModeller.js"
 import { lookAtServiceFile } from "./serviceFile.js"
 import { createSharedSchemaFiles } from "./sharedSchema.js"
-import { FieldFacts } from "./typeFacts.js"
+import { CodeFacts,FieldFacts } from "./typeFacts.js"
 
 export function run(appRoot: string, typesRoot: string, config: { deleteOldGraphQLDTS?: boolean; runESLint?: boolean; sys?: System } = {}) {
-	const sys = config.sys || tsSys
+	const sys = config.sys ?? tsSys
 	const project = new Project({ useInMemoryFileSystem: true })
 
 	let gqlSchema: graphql.GraphQLSchema | undefined
@@ -44,19 +44,19 @@ export function run(appRoot: string, typesRoot: string, config: { deleteOldGraph
 	getGraphQLSDLFromFile(settings)
 	getPrismaSchemaFromFile(settings)
 
+	if (!gqlSchema) throw new Error("No GraphQL Schema was created during setup")
+
 	const appContext: AppContext = {
-		gql: gqlSchema!,
+		gql: gqlSchema,
 		prisma: prismaSchema,
 		tsProject: project,
+		serviceFacts: new Map<string, CodeFacts>(),
 		fieldFacts: new Map<string, FieldFacts>(),
 		settings,
 		sys,
 		join,
 		basename,
 	}
-
-	// Test one rando file
-	// await getFileTSInfo(fileToRead, appContext);
 
 	const serviceFilesToLookAt = [] as string[]
 	for (const dirEntry of sys.readDirectory(appContext.settings.apiServicesPath)) {
@@ -95,14 +95,13 @@ export function run(appRoot: string, typesRoot: string, config: { deleteOldGraph
 	console.log(`Updated`, typesRoot)
 
 	if (config.runESLint) {
-		console.log("Running ESLint...")
+		// console.log("Running ESLint...")
 		// const process = Deno.run({
 		// 	cwd: appRoot,
 		// 	cmd: ["yarn", "eslint", "--fix", "--ext", ".d.ts", appContext.settings.typesFolderRoot],
 		// 	stdin: "inherit",
 		// 	stdout: "inherit",
 		// })
-
 		// await process.status()
 	}
 

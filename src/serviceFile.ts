@@ -3,20 +3,27 @@ import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
 // import { graphql, path, tsMorph } from "./deps.ts"
-import { FieldFacts } from "./typeFacts.js"
+import { CodeFacts, FieldFacts, ModelResolverFacts } from "./typeFacts.js"
 import { typeMapper } from "./typeMap.js"
 import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField, varStartsWithUppercase } from "./utils.js"
 
 export const lookAtServiceFile = (file: string, context: AppContext) => {
-	const { gql, prisma, settings } = context
+	const { gql, prisma, settings, serviceFacts } = context
 
-	if (!gql) throw new Error("No schema")
-	if (!prisma) throw new Error("No prisma schema")
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	if (!gql) throw new Error(`No schema when wanting to look at service file: ${file}`)
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+	if (!prisma) throw new Error(`No prisma schema when wanting to look at service file: ${file}`)
 
 	// This isn't good enough, needs to be relative to api/src/services
+	const fileKey = file.replace(settings.apiServicesPath, "")
+
+	// const priorFacts = serviceInfo.get(fileKey)
+	const thisFact: CodeFacts = {}
+
 	const filename = context.basename(file)
 	const fileContents = context.sys.readFile(file)
-	const referenceFileSourceFile = context.tsProject.createSourceFile(`/source/${filename}`, fileContents)
+	const referenceFileSourceFile = context.tsProject.createSourceFile(`/source/${fileKey}`, fileContents)
 
 	const vars = referenceFileSourceFile.getVariableDeclarations().filter((v) => v.isExported())
 
@@ -27,10 +34,14 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 	const fileDTS = context.tsProject.createSourceFile("/source/index.d.ts", "", { overwrite: true })
 
-	const queryType = gql.getQueryType()
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const queryType = gql.getQueryType()!
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!queryType) throw new Error("No query type")
 
-	const mutationType = gql.getMutationType()
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const mutationType = gql.getMutationType()!
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!mutationType) throw new Error("No mutation type")
 
 	const externalMapper = typeMapper(context, { preferPrismaModels: true })
@@ -38,11 +49,15 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 	const extraPrismaReferences = new Set<string>()
 
-	// Add the root resolvers
-	queryResolvers.forEach((v) =>
-		addTypeForQueryResolver(v.getName(), getResolverInformationForDeclaration(v.getInitializer(), queryType.name))
-	)
+	// Add the root function declarations
+	queryResolvers.forEach((v) => {
+		const isQuery = v.getName() in queryType.getFields()
+		const isMutation = v.getName() in mutationType.getFields()
+		const parentName = isQuery ? queryType.name : isMutation ? mutationType.name : "__unincluded"
+		addTypeForQueryResolver(v.getName(), getResolverInformationForDeclaration(v.getInitializer(), parentName))
+	})
 
+	// Next all the capital consts
 	resolverContainers.forEach((c) => {
 		addCustomTypeResolvers(c, {})
 	})
@@ -79,7 +94,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		...new Set([
 			...sharedGraphQLObjectsReferenced.prisma,
 			...sharedInternalGraphQLObjectsReferenced.prisma,
-			...(extraPrismaReferences.values() || []),
+			...extraPrismaReferences.values(),
 		]),
 	]
 
@@ -107,17 +122,30 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		})
 	}
 
+	serviceFacts.set(fileKey, thisFact)
+
+	const dtsFilename = filename.endsWith(".ts") ? filename.replace(".ts", ".d.ts") : filename.replace(".js", ".d.ts")
+
 	fileDTS.formatText({ indentSize: 2 })
-
-	context.sys.writeFile(context.join(context.settings.typesFolderRoot, filename.replace(".ts", ".d.ts")), fileDTS.getText())
-
+	context.sys.writeFile(context.join(context.settings.typesFolderRoot, dtsFilename), fileDTS.getText())
 	return
 
 	function addTypeForQueryResolver(name: string, config: ResolverTypeInformation) {
-		let field = queryType!.getFields()[name]
+		let field = queryType.getFields()[name]
 		if (!field) {
-			field = mutationType!.getFields()[name]
+			field = mutationType.getFields()[name]
 		}
+
+		const parentTypeName = config.parentName === queryType.name || config.parentName === mutationType.name ? "object" : config.parentName
+
+		// Start making facts about the services
+		const fact: ModelResolverFacts = thisFact[name] || {
+			typeName: parentTypeName,
+			resolvers: new Map(),
+		}
+
+		fact.resolvers.set(name, { name, ...config })
+		thisFact[name] = fact
 
 		if (!field) {
 			fileDTS.addStatements(`\n// ${name} does not exist on Query or Mutation`)
@@ -138,9 +166,8 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 			mapper: externalMapper.map,
 		})
 
-		const argsParam = args || "object"
+		const argsParam = args ?? "object"
 
-		const parentType = config.parentName === "Query" || config.parentName === "Mutation" ? "object" : config.parentName
 		const tType = returnTypeMapper.map(field.type, { preferNullOverUndefined: true, typenamePrefix: "RT" })
 
 		let returnType = tType
@@ -156,7 +183,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 				{ name: "args", type: argsParam, hasQuestionToken: config.funcArgCount < 1 },
 				{
 					name: "obj",
-					type: `{ root: ${parentType}, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }`,
+					type: `{ root: ${parentTypeName}, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }`,
 					hasQuestionToken: config.funcArgCount < 2,
 				},
 			],
@@ -173,7 +200,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 			if (!name.match(/^[A-Z]/)) return
 
 			const type = d.getType()
-			const hasGenericArgs = type && type.getText().includes("<")
+			const hasGenericArgs = type.getText().includes("<")
 			const fieldFacts: FieldFacts = {}
 
 			// Grab the const Thing = { ... }

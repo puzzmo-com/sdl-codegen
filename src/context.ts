@@ -3,7 +3,7 @@ import * as tsMorph from "ts-morph"
 import { System } from "typescript"
 
 import { PrismaMap } from "./prismaModeller.js"
-import { FieldFacts } from "./typeFacts.js"
+import { CodeFacts, FieldFacts } from "./typeFacts.js"
 
 export interface AppContext {
 	/** POSIX-y fn not built into System */
@@ -15,7 +15,7 @@ export interface AppContext {
 	/** POSXIY- fn not built into System */
 	join: (...paths: string[]) => string
 	prisma: PrismaMap
-	/** A set of paths for the codegen to work from */
+	serviceFacts: Map<string, CodeFacts>
 	settings: {
 		apiServicesPath: string
 		graphQLSchemaPath: string
