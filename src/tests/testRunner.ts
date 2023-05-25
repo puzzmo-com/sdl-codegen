@@ -33,7 +33,7 @@ export function getDTSFilesForRun(run: Run) {
 		prisma: prismaModeller(prisma),
 		tsProject: project,
 		fieldFacts: new Map<string, FieldFacts>(),
-		serviceFacts: new Map<string, CodeFacts>(),
+		codeFacts: new Map<string, CodeFacts>(),
 		settings: {
 			root: "/",
 			graphQLSchemaPath: "/.redwood/schema.graphql",

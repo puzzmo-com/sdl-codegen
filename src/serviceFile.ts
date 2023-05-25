@@ -7,7 +7,7 @@ import { TypeMapper, typeMapper } from "./typeMap.js"
 import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField } from "./utils.js"
 
 export const lookAtServiceFile = (file: string, context: AppContext) => {
-	const { gql, prisma, settings, serviceFacts, fieldFacts } = context
+	const { gql, prisma, settings, codeFacts: serviceFacts, fieldFacts } = context
 
 	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!gql) throw new Error(`No schema when wanting to look at service file: ${file}`)

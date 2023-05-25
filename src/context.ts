@@ -6,29 +6,36 @@ import { PrismaMap } from "./prismaModeller.js"
 import { CodeFacts, FieldFacts } from "./typeFacts.js"
 
 export interface AppContext {
-	/** POSIX fn for the runtime */
+	/** POSIX-y fn not built into System */
 	basename: (path: string) => string
+	/** "service" should be code here */
+	codeFacts: Map<string, CodeFacts>
 	/** A global set of facts about resolvers focused from the GQL side  */
 	fieldFacts: Map<string, FieldFacts>
+	/** When we emit .d.ts files, it runs the ts formatter over the file first - you can override the default settings  */
+	formatCodeSettings?: FormatCodeSettings
 	/** So you can override the formatter */
-	formatting?: FormatCodeSettings
 	gql: graphql.GraphQLSchema
-	/** POSIX fn for the runtime */
+	/** POSXIY- fn not built into System */
 	join: (...paths: string[]) => string
+	/** A map of prisma models */
 	prisma: PrismaMap
-	/** "service" should be code here */
-	serviceFacts: Map<string, CodeFacts>
+
+	/** Maybe this could be pathSettings instead? */
 	settings: {
 		apiServicesPath: string
 		graphQLSchemaPath: string
-		prismaDSLPath: string
 		root: string
 		sharedFilename: string
 		sharedInternalFilename: string
 		typesFolderRoot: string
 	}
-
+	/** An implementation of the TypeScript system, this can be grabbed pretty
+	 * easily from the typescript import, or you can use your own like tsvfs in browsers.
+	 */
 	sys: System
-
+	/** ts-morph is used to abstract over the typescript compiler API, this project file
+	 * is a slightly augmented version of the typescript Project api.
+	 */
 	tsProject: tsMorph.Project
 }
