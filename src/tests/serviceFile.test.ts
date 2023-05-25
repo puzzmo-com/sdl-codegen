@@ -1,7 +1,8 @@
 import { readFileSync } from "fs"
 import { expect, it } from "vitest"
 
-import { getCodeFactsForJSTSFileAtPath, lookAtServiceFile } from "../serviceFile"
+import { lookAtServiceFile } from "../serviceFile"
+import { getCodeFactsForJSTSFileAtPath } from "../serviceFile.codefacts"
 import { getDTSFilesForRun } from "./testRunner"
 
 it("reads a service file", () => {

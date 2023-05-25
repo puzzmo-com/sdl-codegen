@@ -1,31 +1,27 @@
 import * as graphql from "graphql"
-import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
 import { getCodeFactsForJSTSFileAtPath } from "./serviceFile.codefacts.js"
-import { CodeFacts, FieldFacts, ModelResolverFacts, ResolverFuncFact } from "./typeFacts.js"
-import { typeMapper } from "./typeMap.js"
+import { CodeFacts, ModelResolverFacts, ResolverFuncFact } from "./typeFacts.js"
+import { TypeMapper, typeMapper } from "./typeMap.js"
 import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField } from "./utils.js"
 
 export const lookAtServiceFile = (file: string, context: AppContext) => {
-	const { gql, prisma, settings, serviceFacts } = context
+	const { gql, prisma, settings, serviceFacts, fieldFacts } = context
 
 	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!gql) throw new Error(`No schema when wanting to look at service file: ${file}`)
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!prisma) throw new Error(`No prisma schema when wanting to look at service file: ${file}`)
 
 	// This isn't good enough, needs to be relative to api/src/services
 	const fileKey = file.replace(settings.apiServicesPath, "")
 
-	// const priorFacts = serviceInfo.get(fileKey)
 	const thisFact: CodeFacts = {}
 
 	const filename = context.basename(file)
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const queryType = gql.getQueryType()!
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!queryType) throw new Error("No query type")
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -36,15 +32,20 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	const externalMapper = typeMapper(context, { preferPrismaModels: true })
 	const returnTypeMapper = typeMapper(context, {})
 
+	// The description of the source file
 	const fileFacts = getCodeFactsForJSTSFileAtPath(file, context)
 
+	// Tracks prospective prisma models which are used in the file
 	const extraPrismaReferences = new Set<string>()
 
+	// The file we'll be creating in-memory throughout this fn
 	const fileDTS = context.tsProject.createSourceFile(`source/${fileKey}.d.ts`, "", { overwrite: true })
 
-	const rootResolvers = fileFacts.maybe_query_mutation?.resolvers
+	// Basically if a top level resolver reference Query or Mutation
+	const knownSpecialCasesForGraphQL: string[] = []
 
 	// Add the root function declarations
+	const rootResolvers = fileFacts.maybe_query_mutation?.resolvers
 	if (rootResolvers)
 		rootResolvers.forEach((v) => {
 			const isQuery = v.name in queryType.getFields()
@@ -59,25 +60,20 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		})
 
 	// Add the root function declarations
-	Object.keys(fileFacts).forEach((modelName) => {
-		if (modelName === "maybe_query_mutation") return
+	Object.values(fileFacts).forEach((model) => {
+		if (!model) return
+		const skip = ["maybe_query_mutation", queryType.name, mutationType.name]
+		if (skip.includes(model.typeName)) return
 
-		const facts = fileFacts.modelName
-		if (!facts) return
-		addDefinitionsForTopLevelResolvers(facts.typeName, facts)
+		addCustomTypeModel(model)
 	})
-
-	// Next all the capital consts
-	// resolverContainers.forEach((c) => {
-	// 	addCustomTypeResolvers(c, {})
-	// })
 
 	const sharedGraphQLObjectsReferenced = externalMapper.getReferencedGraphQLThingsInMapping()
 	if (sharedGraphQLObjectsReferenced.types.length) {
 		fileDTS.addImportDeclaration({
 			isTypeOnly: true,
 			moduleSpecifier: `./${settings.sharedFilename.replace(".d.ts", "")}`,
-			namedImports: sharedGraphQLObjectsReferenced.types,
+			namedImports: [...sharedGraphQLObjectsReferenced.types, ...knownSpecialCasesForGraphQL],
 		})
 	}
 
@@ -109,10 +105,11 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	]
 
 	if (prismases.length) {
+		const validPrismaObjs = prismases.filter((p) => prisma.has(p))
 		fileDTS.addImportDeclaration({
 			isTypeOnly: true,
 			moduleSpecifier: "@prisma/client",
-			namedImports: prismases.map((p) => `${p} as P${p}`),
+			namedImports: validPrismaObjs.map((p) => `${p} as P${p}`),
 		})
 	}
 
@@ -135,7 +132,6 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	serviceFacts.set(fileKey, thisFact)
 
 	const dtsFilename = filename.endsWith(".ts") ? filename.replace(".ts", ".d.ts") : filename.replace(".js", ".d.ts")
-
 	fileDTS.formatText({ indentSize: 2 })
 	context.sys.writeFile(context.join(context.settings.typesFolderRoot, dtsFilename), fileDTS.getText())
 	return
@@ -148,9 +144,11 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		}
 
 		const interfaceDeclaration = fileDTS.addInterface({
-			name: `${capitalizeFirstLetter(parentName)}Resolver`,
+			name: `${capitalizeFirstLetter(config.name)}Resolver`,
 			isExported: true,
-			docs: ["SDL: " + graphql.print(field.astNode!)],
+			docs: field.astNode
+				? ["SDL: " + graphql.print(field.astNode)]
+				: ["@deprecated: Could not find this field in the schema for Mutation or Query"],
 		})
 
 		const args = createAndReferOrInlineArgsForField(field, {
@@ -159,17 +157,12 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 			mapper: externalMapper.map,
 		})
 
+		if (parentName === queryType.name) knownSpecialCasesForGraphQL.push(queryType.name)
+		if (parentName === mutationType.name) knownSpecialCasesForGraphQL.push(mutationType.name)
+
 		const argsParam = args ?? "object"
 
-		const tType = returnTypeMapper.map(field.type, { preferNullOverUndefined: true, typenamePrefix: "RT" })
-
-		let returnType = tType
-		const all = `${tType} | Promise<${tType}> | (() => Promise<${tType}>)`
-
-		if (config.isFunc && config.isAsync) returnType = `Promise<${tType}>`
-		else if (config.isFunc) returnType = all
-		else if (config.isObjLiteral) returnType = tType
-		else if (config.isUnknown) returnType = all
+		const returnType = returnTypeForResolver(returnTypeMapper, field, config)
 
 		interfaceDeclaration.addCallSignature({
 			parameters: [
@@ -184,96 +177,116 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		})
 	}
 
-	function addCustomTypeResolvers(config: ModelResolverFacts) {
-		const modelName  = config.typeName
-		// config.resolvers.forEach((resolver) => {
-			// const { name } = resolver
-			// only do it if the first letter is a capital
+	/** Ideally, we want to be able to write the type for just the object  */
+	function addCustomTypeModel(modelFacts: ModelResolverFacts) {
+		const modelName = modelFacts.typeName
+		extraPrismaReferences.add(modelName)
 
-			// Make an interface
+		// Make an interface, this is the version we are replacing from graphql-codegen:
+		// Account: MergePrismaWithSdlTypes<PrismaAccount, MakeRelationsOptional<Account, AllMappedModels>, AllMappedModels>;
+		const gqlType = gql.getType(modelName)
+		if (!gqlType) {
+			// throw new Error(`Could not find a GraphQL type named ${d.getName()}`);
+			fileDTS.addStatements(`\n// ${modelName} does not exist in the schema`)
+			return
+		}
 
-			// Account: MergePrismaWithSdlTypes<PrismaAccount, MakeRelationsOptional<Account, AllMappedModels>, AllMappedModels>;
-			const gqlType = gql.getType(modelName)
-			if (!gqlType) {
-				// throw new Error(`Could not find a GraphQL type named ${d.getName()}`);
-				fileDTS.addStatements(`\n// ${d.getName()} does not exist in the schema`)
-				return
+		if (!graphql.isObjectType(gqlType)) {
+			throw new Error(`In your schema ${modelName} is not an object, which we can only make resolver types for`)
+		}
+
+		const fields = gqlType.getFields()
+
+		// See:   https://github.com/redwoodjs/redwood/pull/6228#issue-1342966511
+		// For more ideas
+
+		const hasGenerics = modelFacts.hasGenericArg
+
+		// This is what they would have to write
+		const resolverInterface = fileDTS.addInterface({
+			name: `${modelName}TypeResolvers`,
+			typeParameters: hasGenerics ? ["Extended"] : [],
+			isExported: true,
+		})
+
+		// The parent type for the resolvers
+		fileDTS.addTypeAlias({
+			name: `${modelName}AsParent`,
+			typeParameters: hasGenerics ? ["Extended"] : [],
+			type: `P${modelName} ${createParentAdditionallyDefinedFunctions()} ${hasGenerics ? " & Extended" : ""}`,
+			// docs: ["The prisma model, mixed with fns already defined inside the resolvers."],
+		})
+
+		const modelFieldFacts = fieldFacts.get(modelName) ?? {}
+
+		// Loop through the resolvers, adding the fields which have resolvers implemented in the source file
+		modelFacts.resolvers.forEach((resolver) => {
+			const field = fields[resolver.name]
+			if (field) {
+				const fieldName = resolver.name
+				if (modelFieldFacts[fieldName]) modelFieldFacts[fieldName].hasResolverImplementation = true
+				else modelFieldFacts[fieldName] = { hasResolverImplementation: true }
+
+				const argsType = inlineArgsForField(field, { mapper: externalMapper.map }) ?? "undefined"
+				const param = hasGenerics ? "<Extended>" : ""
+
+				const firstQ = resolver.funcArgCount < 1 ? "?" : ""
+				const secondQ = resolver.funcArgCount < 2 ? "?" : ""
+				const innerArgs = `args${firstQ}: ${argsType}, obj${secondQ}: { root: ${modelName}AsParent${param}, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }`
+
+				const returnType = returnTypeForResolver(returnTypeMapper, field, resolver)
+
+				const docs = field.astNode ? [`SDL: ${graphql.print(field.astNode)}`] : []
+				// For speed we should switch this out to addProperties eventually
+				resolverInterface.addProperty({
+					name: fieldName,
+					leadingTrivia: "\n",
+					docs,
+					type: resolver.isFunc || resolver.isUnknown ? `(${innerArgs}) => ${returnType ?? "any"}` : returnType,
+				})
+			} else {
+				resolverInterface.addCallSignature({
+					docs: [` @deprecated: SDL ${modelName}.${resolver.name} does not exist in your schema`],
+				})
 			}
+		})
 
-			if (!graphql.isObjectType(gqlType)) {
-				throw new Error(`In your schema ${d.getName()} is not an object, which we can only make resolver types for`)
-			}
-
-			const fields = gqlType.getFields()
-
-			extraPrismaReferences.add(name)
-
-			// See:   https://github.com/redwoodjs/redwood/pull/6228#issue-1342966511
-			// For more ideas
-
-			const fieldFromASTKey = (key: (typeof keys)[number]) => {
-				const existsInGraphQLSchema = fields[key.name]
-				const type = existsInGraphQLSchema ? fields[key.name].type : new graphql.GraphQLScalarType({ name: "JSON" })
+		function createParentAdditionallyDefinedFunctions() {
+			const fns: string[] = []
+			modelFacts.resolvers.forEach((resolver) => {
+				const existsInGraphQLSchema = fields[resolver.name]
 				if (!existsInGraphQLSchema) {
 					console.warn(
-						`The service file ${filename} has a field ${key.name} on ${name} that does not exist in the generated schema.graphql`
+						`The service file ${filename} has a field ${resolver.name} on ${modelName} that does not exist in the generated schema.graphql`
 					)
 				}
 
 				const prefix = !existsInGraphQLSchema ? "\n// This field does not exist in the generated schema.graphql\n" : ""
-				return `${prefix}${key.name}: () => Promise<${externalMapper.map(type, {})}>`
-			}
-
-			fileDTS.addTypeAlias({
-				name: `${name}AsParent`,
-				typeParameters: hasGenericArgs ? ["Extended"] : [],
-				type: `P${name} & { ${keys.map(fieldFromASTKey).join(", \n") + `} ` + (hasGenericArgs ? " & Extended" : "")}`,
+				const returnType = returnTypeForResolver(externalMapper, existsInGraphQLSchema, resolver)
+				// fns.push(`${prefix}${resolver.name}: () => Promise<${externalMapper.map(type, {})}>`)
+				fns.push(`${prefix}${resolver.name}: () => ${returnType}`)
 			})
 
-			const resolverInterface = fileDTS.addInterface({
-				name: `${name}TypeResolvers`,
-				typeParameters: hasGenericArgs ? ["Extended"] : [],
-				isExported: true,
-			})
+			if (fns.length < 1) return ""
+			return "& {" + fns.join(", \n") + "}"
+		}
 
-			keys.forEach((key) => {
-				const { name: fieldName, info } = key
-				const field = fields[fieldName]
-				if (field) {
-					if (fieldFacts[fieldName]) fieldFacts[fieldName].hasResolverImplementation = true
-					else fieldFacts[fieldName] = { hasResolverImplementation: true }
-
-					const argsType = inlineArgsForField(field, { mapper: externalMapper.map })
-					const param = hasGenericArgs ? "<Extended>" : ""
-
-					const firstQ = info.funcArgCount < 1 ? "?" : ""
-					const secondQ = info.funcArgCount < 2 ? "?" : ""
-					const innerArgs = `args${firstQ}: ${argsType}, obj${secondQ}: { root: ${name}AsParent${param}, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }`
-
-					const tType = returnTypeMapper.map(field.type, { preferNullOverUndefined: true, typenamePrefix: "RT" })
-
-					let returnType = tType
-					const all = `=> ${tType} | Promise<${tType}> | (() => Promise<${tType}>)`
-
-					if (info.isFunc && info.isAsync) returnType = ` => Promise<${tType}>`
-					else if (info.isFunc) returnType = all
-					else if (info.isObjLiteral) returnType = tType
-					else if (info.isUnknown) returnType = all
-
-					resolverInterface.addProperty({
-						name: fieldName,
-						leadingTrivia: "\n",
-						docs: ["SDL: " + graphql.print(field.astNode!)],
-						type: info.isFunc || info.isUnknown ? `(${innerArgs}) ${returnType}` : returnType,
-					})
-				} else {
-					resolverInterface.addCallSignature({
-						docs: [` @deprecated: SDL ${d.getName()}.${fieldName} does not exist in your schema`],
-					})
-				}
-			})
-
-			context.fieldFacts.set(d.getName(), fieldFacts)
-		})
+		fieldFacts.set(modelName, modelFieldFacts)
 	}
+}
+
+function returnTypeForResolver(mapper: TypeMapper, field: graphql.GraphQLField<unknown, unknown> | undefined, resolver: ResolverFuncFact) {
+	if (!field) return "void"
+
+	const tType = mapper.map(field.type, { preferNullOverUndefined: true, typenamePrefix: "RT" }) ?? "void"
+
+	let returnType = tType
+	const all = `${tType} | Promise<${tType}> | (() => Promise<${tType}>)`
+
+	if (resolver.isFunc && resolver.isAsync) returnType = `Promise<${tType}>`
+	else if (resolver.isFunc) returnType = all
+	else if (resolver.isObjLiteral) returnType = tType
+	else if (resolver.isUnknown) returnType = all
+
+	return returnType
 }

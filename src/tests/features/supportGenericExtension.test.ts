@@ -28,15 +28,16 @@ export const Game: GameResolvers<{ type: string }> = {};
 	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService: services, prismaSchema })
 
 	expect(vfsMap.get("/types/games.d.ts")!).toContain("interface GameTypeResolvers<Extended>")
-	expect(vfsMap.get("/types/games.d.ts")!).toContain("GameAsParent<Extended> = PGame & {} & Extended")
 
-	expect(vfsMap.get("/types/games.d.ts"))!.toContain(
-		`
-import type { Game as PGame } from "@prisma/client";\n
-type GameAsParent<Extended> = PGame & {} & Extended;
+	expect(vfsMap.get("/types/games.d.ts")!).toContain("GameAsParent<Extended> = PGame & Extended")
 
-export interface GameTypeResolvers<Extended> {
-}
-`.trim()
-	)
+	expect(vfsMap.get("/types/games.d.ts"))!.toMatchInlineSnapshot(`
+		"import type { Game as PGame } from \\"@prisma/client\\";
+
+		export interface GameTypeResolvers<Extended> {
+		}
+
+		type GameAsParent<Extended> = PGame & Extended;
+		"
+	`)
 })

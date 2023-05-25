@@ -80,8 +80,12 @@ module.exports = {
 		"simple-import-sort/exports": "error",
 		"simple-import-sort/imports": "error",
 
+		// graphql's types make this annoying
+		"no-unnecessary-condition": "off",
+		"@typescript-eslint/no-unnecessary-condition": "off",
+
 		// These on-by-default rules don't work well for this repo and we like them off.
-		"no-inner-declarations": "off",
+		"@typescript-eslint/no-inner-declarations": "off",
 
 		// Stylistic concerns that don't interfere with Prettier
 		"padding-line-between-statements": "off",

@@ -48,16 +48,16 @@ export const Game = {
 
 		/** SDL: game: Game */
 		export interface GameResolver {
-		  (args?: object, obj?: { root: undefined, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
+		  (args?: object, obj?: { root: Query, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
-
-		type GameAsParent = PGame & { summary: () => Promise<string> };
 
 		export interface GameTypeResolvers {
 
 		  /** SDL: summary: String! */
 		  summary: (args: undefined, obj: { root: GameAsParent, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }) => string | Promise<string> | (() => Promise<string>);
 		}
+
+		type GameAsParent = PGame & { summary: () => string | Promise<string> | (() => Promise<string>) };
 		"
 	`
 	)
