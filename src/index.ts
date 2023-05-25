@@ -23,6 +23,7 @@ export function runFullCodegen(preset: string, config: unknown): { paths: string
 export function runFullCodegen(preset: string, config: unknown): { paths: string[] } {
 	if (preset !== "redwood") throw new Error("Only Redwood codegen is supported at this time")
 	const paths = (config as { paths: RedwoodPaths }).paths
+	const sys = typescript.sys
 
 	const pathSettings: AppContext["pathSettings"] = {
 		root: paths.base,
@@ -38,14 +39,14 @@ export function runFullCodegen(preset: string, config: unknown): { paths: string
 
 	let gqlSchema: graphql.GraphQLSchema | undefined
 	const getGraphQLSDLFromFile = (settings: AppContext["pathSettings"]) => {
-		const schema = appContext.sys.readFile(settings.graphQLSchemaPath)
+		const schema = sys.readFile(settings.graphQLSchemaPath)
 		if (!schema) throw new Error("No schema found at " + settings.graphQLSchemaPath)
 		gqlSchema = graphql.buildSchema(schema)
 	}
 
 	let prismaSchema: PrismaMap = new Map()
 	const getPrismaSchemaFromFile = (settings: AppContext["pathSettings"]) => {
-		const prismaSchemaText = appContext.sys.readFile(settings.prismaDSLPath)
+		const prismaSchemaText = sys.readFile(settings.prismaDSLPath)
 		if (!prismaSchemaText) throw new Error("No prisma file found at " + settings.prismaDSLPath)
 		const prismaSchemaBlocks = getPrismaSchema(prismaSchemaText)
 		prismaSchema = prismaModeller(prismaSchemaBlocks)
@@ -63,7 +64,7 @@ export function runFullCodegen(preset: string, config: unknown): { paths: string
 		codeFacts: new Map<string, CodeFacts>(),
 		fieldFacts: new Map<string, FieldFacts>(),
 		pathSettings,
-		sys: typescript.sys,
+		sys,
 		join,
 		basename,
 	}
