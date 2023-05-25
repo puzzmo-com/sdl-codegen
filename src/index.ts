@@ -1,7 +1,7 @@
 import { getSchema as getPrismaSchema } from "@mrleebo/prisma-ast"
 import * as graphql from "graphql"
 import { Project } from "ts-morph"
-import { sys } from "typescript"
+import * as typescript from "typescript"
 
 import { AppContext } from "./context.js"
 import { PrismaMap, prismaModeller } from "./prismaModeller.js"
@@ -38,14 +38,14 @@ export function runFullCodegen(preset: string, config: unknown): { paths: string
 
 	let gqlSchema: graphql.GraphQLSchema | undefined
 	const getGraphQLSDLFromFile = (settings: AppContext["pathSettings"]) => {
-		const schema = sys.readFile(settings.graphQLSchemaPath)
+		const schema = appContext.sys.readFile(settings.graphQLSchemaPath)
 		if (!schema) throw new Error("No schema found at " + settings.graphQLSchemaPath)
 		gqlSchema = graphql.buildSchema(schema)
 	}
 
 	let prismaSchema: PrismaMap = new Map()
 	const getPrismaSchemaFromFile = (settings: AppContext["pathSettings"]) => {
-		const prismaSchemaText = sys.readFile(settings.prismaDSLPath)
+		const prismaSchemaText = appContext.sys.readFile(settings.prismaDSLPath)
 		if (!prismaSchemaText) throw new Error("No prisma file found at " + settings.prismaDSLPath)
 		const prismaSchemaBlocks = getPrismaSchema(prismaSchemaText)
 		prismaSchema = prismaModeller(prismaSchemaBlocks)
@@ -63,22 +63,22 @@ export function runFullCodegen(preset: string, config: unknown): { paths: string
 		codeFacts: new Map<string, CodeFacts>(),
 		fieldFacts: new Map<string, FieldFacts>(),
 		pathSettings,
-		sys,
+		sys: typescript.sys,
 		join,
 		basename,
 	}
 
 	// TODO: Maybe Redwood has an API for this? Its grabbing all the services
 	const serviceFilesToLookAt = [] as string[]
-	for (const dirEntry of sys.readDirectory(appContext.pathSettings.apiServicesPath)) {
+	for (const dirEntry of appContext.sys.readDirectory(appContext.pathSettings.apiServicesPath)) {
 		// These are generally the folders
-		if (sys.directoryExists(dirEntry)) {
+		if (appContext.sys.directoryExists(dirEntry)) {
 			const folderPath = join(appContext.pathSettings.apiServicesPath, dirEntry)
 			// And these are the files in them
-			for (const subdirEntry of sys.readDirectory(folderPath)) {
+			for (const subdirEntry of appContext.sys.readDirectory(folderPath)) {
 				const folderPath = join(appContext.pathSettings.apiServicesPath, dirEntry)
 				if (
-					sys.fileExists(folderPath) &&
+					appContext.sys.fileExists(folderPath) &&
 					subdirEntry.endsWith(".ts") &&
 					!subdirEntry.includes(".test.ts") &&
 					!subdirEntry.includes("scenarios.ts")

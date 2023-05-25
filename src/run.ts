@@ -4,7 +4,7 @@ import { basename, join } from "node:path"
 import { getSchema as getPrismaSchema } from "@mrleebo/prisma-ast"
 import * as graphql from "graphql"
 import { Project } from "ts-morph"
-import { sys as tsSys, System } from "typescript"
+import * as typescript from "typescript"
 
 import { AppContext } from "./context.js"
 import { PrismaMap, prismaModeller } from "./prismaModeller.js"
@@ -12,8 +12,12 @@ import { lookAtServiceFile } from "./serviceFile.js"
 import { createSharedSchemaFiles } from "./sharedSchema.js"
 import { CodeFacts, FieldFacts } from "./typeFacts.js"
 
-export function run(appRoot: string, typesRoot: string, config: { deleteOldGraphQLDTS?: boolean; runESLint?: boolean; sys?: System } = {}) {
-	const sys = config.sys ?? tsSys
+export function run(
+	appRoot: string,
+	typesRoot: string,
+	config: { deleteOldGraphQLDTS?: boolean; runESLint?: boolean; sys?: typescript.System } = {}
+) {
+	const sys = config.sys ?? typescript.sys
 	const project = new Project({ useInMemoryFileSystem: true })
 
 	let gqlSchema: graphql.GraphQLSchema | undefined
