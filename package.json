@@ -8,7 +8,6 @@
 	},
 	"license": "MIT",
 	"author": "Orta Therox <orta.therox@gmail.com>",
-	"type": "module",
 	"main": "./lib/index.js",
 	"files": [
 		"lib/",
