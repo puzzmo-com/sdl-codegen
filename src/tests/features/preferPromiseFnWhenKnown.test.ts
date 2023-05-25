@@ -50,7 +50,8 @@ export const Game = {
 	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService, prismaSchema })
 	const dts = vfsMap.get("/types/games.d.ts")!
 	expect(dts.trim()).toMatchInlineSnapshot(`
-		"import type { Game as RTGame } from \\"./shared-return-types\\";
+		"import type { Query } from \\"./shared-schema-types\\";
+		import type { Game as RTGame } from \\"./shared-return-types\\";
 		import type { Game as PGame } from \\"@prisma/client\\";
 		import type { GraphQLResolveInfo } from \\"graphql\\";
 		import type { RedwoodGraphQLContext } from \\"@redwoodjs/graphql-server/dist/functions/types\\";

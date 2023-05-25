@@ -42,7 +42,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	const fileDTS = context.tsProject.createSourceFile(`source/${fileKey}.d.ts`, "", { overwrite: true })
 
 	// Basically if a top level resolver reference Query or Mutation
-	const knownSpecialCasesForGraphQL: string[] = []
+	const knownSpecialCasesForGraphQL = new Set<string>()
 
 	// Add the root function declarations
 	const rootResolvers = fileFacts.maybe_query_mutation?.resolvers
@@ -69,11 +69,12 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	})
 
 	const sharedGraphQLObjectsReferenced = externalMapper.getReferencedGraphQLThingsInMapping()
-	if (sharedGraphQLObjectsReferenced.types.length) {
+	const sharedGraphQLObjectsReferencedTypes = [...sharedGraphQLObjectsReferenced.types, ...knownSpecialCasesForGraphQL]
+	if (sharedGraphQLObjectsReferencedTypes.length) {
 		fileDTS.addImportDeclaration({
 			isTypeOnly: true,
 			moduleSpecifier: `./${settings.sharedFilename.replace(".d.ts", "")}`,
-			namedImports: [...sharedGraphQLObjectsReferenced.types, ...knownSpecialCasesForGraphQL],
+			namedImports: sharedGraphQLObjectsReferencedTypes,
 		})
 	}
 
@@ -157,8 +158,8 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 			mapper: externalMapper.map,
 		})
 
-		if (parentName === queryType.name) knownSpecialCasesForGraphQL.push(queryType.name)
-		if (parentName === mutationType.name) knownSpecialCasesForGraphQL.push(mutationType.name)
+		if (parentName === queryType.name) knownSpecialCasesForGraphQL.add(queryType.name)
+		if (parentName === mutationType.name) knownSpecialCasesForGraphQL.add(mutationType.name)
 
 		const argsParam = args ?? "object"
 

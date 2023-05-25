@@ -15,6 +15,11 @@ module.exports = {
 			extends: ["plugin:@typescript-eslint/recommended", "plugin:typescript-sort-keys/recommended"],
 			files: ["**/*.ts"],
 			parser: "@typescript-eslint/parser",
+			rules: {
+				// graphql's types make this annoying
+				"no-unnecessary-condition": "off",
+				"@typescript-eslint/no-unnecessary-condition": "off",
+			},
 		},
 		{
 			extends: ["plugin:@typescript-eslint/recommended-requiring-type-checking", "plugin:@typescript-eslint/strict"],
@@ -85,7 +90,7 @@ module.exports = {
 		"@typescript-eslint/no-unnecessary-condition": "off",
 
 		// These on-by-default rules don't work well for this repo and we like them off.
-		"@typescript-eslint/no-inner-declarations": "off",
+		"no-inner-declarations": "off",
 
 		// Stylistic concerns that don't interfere with Prettier
 		"padding-line-between-statements": "off",
