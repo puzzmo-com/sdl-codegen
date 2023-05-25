@@ -9,6 +9,11 @@ import { typeMapper } from "./typeMap.js"
 export const createSharedSchemaFiles = (context: AppContext) => {
 	createSharedExternalSchemaFile(context)
 	createSharedReturnPositionSchemaFile(context)
+
+	return [
+		context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename),
+		context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedInternalFilename),
+	]
 }
 
 function createSharedExternalSchemaFile(context: AppContext) {

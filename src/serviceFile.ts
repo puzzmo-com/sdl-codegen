@@ -133,9 +133,11 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	serviceFacts.set(fileKey, thisFact)
 
 	const dtsFilename = filename.endsWith(".ts") ? filename.replace(".ts", ".d.ts") : filename.replace(".js", ".d.ts")
+	const dtsFilepath = context.join(context.pathSettings.typesFolderRoot, dtsFilename)
 	fileDTS.formatText({ indentSize: 2 })
-	context.sys.writeFile(context.join(context.pathSettings.typesFolderRoot, dtsFilename), fileDTS.getText())
-	return
+	context.sys.writeFile(dtsFilepath, fileDTS.getText())
+
+	return dtsFilepath
 
 	function addDefinitionsForTopLevelResolvers(parentName: string, config: ResolverFuncFact) {
 		const { name } = config
@@ -274,6 +276,8 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 		fieldFacts.set(modelName, modelFieldFacts)
 	}
+
+	return dtsFilename
 }
 
 function returnTypeForResolver(mapper: TypeMapper, field: graphql.GraphQLField<unknown, unknown> | undefined, resolver: ResolverFuncFact) {

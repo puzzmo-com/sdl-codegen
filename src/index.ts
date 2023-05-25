@@ -15,9 +15,9 @@ export * from "./types.js"
 
 import { basename, join } from "path"
 
-export function runFullCodegen(preset: "redwood", config: { paths: RedwoodPaths }): void
+export function runFullCodegen(preset: "redwood", config: { paths: RedwoodPaths }): string[]
 
-export function runFullCodegen(preset: string, config: unknown): void {
+export function runFullCodegen(preset: string, config: unknown): string[] {
 	if (preset !== "redwood") throw new Error("Only Redwood codegen is supported at this time")
 	const paths = (config as { paths: RedwoodPaths }).paths
 
@@ -86,11 +86,19 @@ export function runFullCodegen(preset: string, config: unknown): void {
 		}
 	}
 
+	const filepaths = [] as string[]
+
 	// Create the two shared schema files
-	createSharedSchemaFiles(appContext)
+	const sharedDTSes = createSharedSchemaFiles(appContext)
+	FileSystem.push(...sharedDTSes)
 
 	// This needs to go first, as it sets up fieldFacts
 	for (const path of serviceFilesToLookAt) {
-		lookAtServiceFile(path, appContext)
+		const dts = lookAtServiceFile(path, appContext)
+		filepaths.push(dts)
+	}
+
+	return {
+		filepaths,
 	}
 }
