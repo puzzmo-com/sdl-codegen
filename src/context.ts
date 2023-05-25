@@ -25,6 +25,7 @@ export interface AppContext {
 	settings: {
 		apiServicesPath: string
 		graphQLSchemaPath: string
+		prismaDSLPath: string
 		root: string
 		sharedFilename: string
 		sharedInternalFilename: string
