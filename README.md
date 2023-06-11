@@ -60,4 +60,9 @@ It's still a bit of a work in progress to have these discrete steps, but it's ge
 ## Development
 
 See [`.github/CONTRIBUTING.md`](./.github/CONTRIBUTING.md), then [`.github/DEVELOPMENT.md`](./.github/DEVELOPMENT.md).
+
 Thanks!
+
+## Deployment
+
+Make a commit like: `git commit --allow-empty -m "feat: Prepare for release"`
