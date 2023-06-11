@@ -8,16 +8,18 @@ export interface SDLCodeGenOptions {
 // These are directly ported from Redwood at
 // packages/project-config/src/paths.ts
 
+// Slightly amended to reduce the constraints on the Redwood team to make changes to this obj!
+
 interface NodeTargetPaths {
 	base: string
 	config: string
-	dataMigrations: string
-	db: string
+	// dataMigrations: string
+	// db: string
 	dbSchema: string
 	directives: string
-	dist: string
-	functions: string
-	generators: string
+	// dist: string
+	// functions: string
+	// generators: string
 	graphql: string
 	lib: string
 	models: string
@@ -30,13 +32,13 @@ export interface RedwoodPaths {
 	api: NodeTargetPaths
 	base: string
 	generated: {
-		base: string
-		prebuild: string
+		// base: string
+		// prebuild: string
 		schema: string
-		types: {
-			includes: string
-			mirror: string
-		}
+		// types: {
+		// 	includes: string
+		// 	mirror: string
+		// }
 	}
 	scripts: string
 	web: any

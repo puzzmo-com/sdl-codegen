@@ -4,6 +4,7 @@ import * as graphql from "graphql"
 import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
+import { formatDTS, getPrettierConfig } from "./formatDTS.js"
 import { typeMapper } from "./typeMap.js"
 
 export const createSharedSchemaFiles = (context: AppContext) => {
@@ -59,7 +60,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 						type: `"${type.name}"`,
 						hasQuestionToken: true,
 					},
-					...Object.entries(type.getFields()).map(([fieldName, obj]) => {
+					...Object.entries(type.getFields()).map(([fieldName, obj]: [string, graphql.GraphQLField<object, object>]) => {
 						const docs = []
 						const prismaField = pType?.properties.get(fieldName)
 						const type = obj.type as graphql.GraphQLType
@@ -92,7 +93,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 					'"' +
 					type
 						.getValues()
-						.map((m) => m.value)
+						.map((m) => (m as { value: string }).value)
 						.join('" | "') +
 					'"',
 			})
@@ -109,9 +110,10 @@ function createSharedExternalSchemaFile(context: AppContext) {
 		)
 	}
 
-	externalTSFile.formatText({ indentSize: 2 })
-
-	context.sys.writeFile(context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename), externalTSFile.getText())
+	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename)
+	const config = getPrettierConfig(fullPath)
+	const formatted = formatDTS(fullPath, externalTSFile.getText(), config)
+	context.sys.writeFile(fullPath, formatted)
 }
 
 function createSharedReturnPositionSchemaFile(context: AppContext) {
@@ -134,6 +136,7 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 
 // This gets particularly valuable when you want to return a union type, an interface, 
 // or a model where the prisma model is nested pretty deeply (GraphQL connections, for example.)
+
 `
 	)
 
@@ -167,7 +170,7 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 						type: `"${type.name}"`,
 						hasQuestionToken: true,
 					},
-					...Object.entries(type.getFields()).map(([fieldName, obj]) => {
+					...Object.entries(type.getFields()).map(([fieldName, obj]: [string, graphql.GraphQLField<object, object>]) => {
 						const hasResolverImplementation = fieldFacts.get(name)?.[fieldName]?.hasResolverImplementation
 						const isOptionalInSDL = !graphql.isNonNullType(obj.type)
 						const doesNotExistInPrisma = false // !prismaField;
@@ -190,7 +193,7 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 					'"' +
 					type
 						.getValues()
-						.map((m) => m.value)
+						.map((m) => (m as { value: string }).value)
 						.join('" | "') +
 					'"',
 			})
@@ -224,8 +227,8 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 		})
 	}
 
-	externalTSFile.formatText({ indentSize: 2 })
-
-	const filePath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedInternalFilename)
-	context.sys.writeFile(filePath, externalTSFile.getText())
+	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedInternalFilename)
+	const config = getPrettierConfig(fullPath)
+	const formatted = formatDTS(fullPath, externalTSFile.getText(), config)
+	context.sys.writeFile(fullPath, formatted)
 }

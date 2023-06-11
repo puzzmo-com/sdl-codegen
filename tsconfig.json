@@ -3,13 +3,14 @@
 		"declaration": true,
 		"declarationMap": true,
 		"esModuleInterop": true,
-		"moduleResolution": "node",
+		"module": "Node16",
+		"moduleResolution": "node16",
 		"outDir": "lib",
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
 		"target": "ES2021"
 	},
-	"exclude": ["node_modules", "src/tests/vendor"],
+	"exclude": ["node_modules", "src/tests"],
 	"include": ["src"]
 }

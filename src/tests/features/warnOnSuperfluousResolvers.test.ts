@@ -1,6 +1,6 @@
 import { expect, it } from "vitest"
 
-import { getDTSFilesForRun, graphql, prisma } from "../testRunner"
+import { getDTSFilesForRun, graphql, prisma } from "../testRunner.js"
 
 it("It prints a warning, and doesn't crash when you have resolvers which exist but are not on the parent", () => {
 	const prismaSchema = prisma`

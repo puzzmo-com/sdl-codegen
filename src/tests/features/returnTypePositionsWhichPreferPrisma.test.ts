@@ -1,6 +1,6 @@
 import { expect, it } from "vitest"
 
-import { getDTSFilesForRun, graphql, prisma } from "../testRunner"
+import { getDTSFilesForRun, graphql, prisma } from "../testRunner.js"
 
 it("supports a return position where a prisma object can be given, if the extra fn are defined as resolvers", () => {
 	const prismaSchema = prisma`
@@ -41,24 +41,41 @@ export const Game = {
 
 	expect(dts.trimStart()).toMatchInlineSnapshot(
 		`
-		"import type { Query } from \\"./shared-schema-types\\";
-		import type { Game as RTGame } from \\"./shared-return-types\\";
-		import type { Game as PGame } from \\"@prisma/client\\";
+		"import type { Game as PGame } from \\"@prisma/client\\";
 		import type { GraphQLResolveInfo } from \\"graphql\\";
-		import type { RedwoodGraphQLContext } from \\"@redwoodjs/graphql-server/dist/functions/types\\";
+
+		import type { RedwoodGraphQLContext } from \\"@redwoodjs/graphql-server/dist/types\\";
+
+		import type { Game as RTGame } from \\"./shared-return-types\\";
+		import type { Query } from \\"./shared-schema-types\\";
 
 		/** SDL: game: Game */
 		export interface GameResolver {
-		  (args?: object, obj?: { root: Query, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
+		  (
+		    args?: object,
+		    obj?: {
+		      root: Query;
+		      context: RedwoodGraphQLContext;
+		      info: GraphQLResolveInfo;
+		    }
+		  ): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
 
 		export interface GameTypeResolvers {
-
 		  /** SDL: summary: String! */
-		  summary: (args: undefined, obj: { root: GameAsParent, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }) => string | Promise<string> | (() => Promise<string>);
+		  summary: (
+		    args: undefined,
+		    obj: {
+		      root: GameAsParent;
+		      context: RedwoodGraphQLContext;
+		      info: GraphQLResolveInfo;
+		    }
+		  ) => string | Promise<string> | (() => Promise<string>);
 		}
 
-		type GameAsParent = PGame & { summary: () => string | Promise<string> | (() => Promise<string>) };
+		type GameAsParent = PGame & {
+		  summary: () => string | Promise<string> | (() => Promise<string>);
+		};
 		"
 	`
 	)

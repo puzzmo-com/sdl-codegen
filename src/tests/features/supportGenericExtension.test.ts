@@ -1,6 +1,6 @@
 import { expect, it } from "vitest"
 
-import { getDTSFilesForRun, graphql, prisma } from "../testRunner"
+import { getDTSFilesForRun, graphql, prisma } from "../testRunner.js"
 
 it("It allows you to add a generic parameter", () => {
 	const prismaSchema = prisma`
@@ -34,8 +34,7 @@ export const Game: GameResolvers<{ type: string }> = {};
 	expect(vfsMap.get("/types/games.d.ts"))!.toMatchInlineSnapshot(`
 		"import type { Game as PGame } from \\"@prisma/client\\";
 
-		export interface GameTypeResolvers<Extended> {
-		}
+		export interface GameTypeResolvers<Extended> {}
 
 		type GameAsParent<Extended> = PGame & Extended;
 		"

@@ -1,6 +1,7 @@
 import * as graphql from "graphql"
 
 import { AppContext } from "./context.js"
+import { formatDTS, getPrettierConfig } from "./formatDTS.js"
 import { getCodeFactsForJSTSFileAtPath } from "./serviceFile.codefacts.js"
 import { CodeFacts, ModelResolverFacts, ResolverFuncFact } from "./typeFacts.js"
 import { TypeMapper, typeMapper } from "./typeMap.js"
@@ -69,24 +70,10 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		addCustomTypeModel(model)
 	})
 
+	// Set up the module imports at the top
 	const sharedGraphQLObjectsReferenced = externalMapper.getReferencedGraphQLThingsInMapping()
 	const sharedGraphQLObjectsReferencedTypes = [...sharedGraphQLObjectsReferenced.types, ...knownSpecialCasesForGraphQL]
-	if (sharedGraphQLObjectsReferencedTypes.length) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: `./${settings.sharedFilename.replace(".d.ts", "")}`,
-			namedImports: sharedGraphQLObjectsReferencedTypes,
-		})
-	}
-
 	const sharedInternalGraphQLObjectsReferenced = returnTypeMapper.getReferencedGraphQLThingsInMapping()
-	if (sharedInternalGraphQLObjectsReferenced.types.length) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: `./${settings.sharedInternalFilename.replace(".d.ts", "")}`,
-			namedImports: sharedInternalGraphQLObjectsReferenced.types.map((t) => `${t} as RT${t}`),
-		})
-	}
 
 	const aliases = [...new Set([...sharedGraphQLObjectsReferenced.scalars, ...sharedInternalGraphQLObjectsReferenced.scalars])]
 	if (aliases.length) {
@@ -126,8 +113,24 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	if (fileDTS.getText().includes("RedwoodGraphQLContext")) {
 		fileDTS.addImportDeclaration({
 			isTypeOnly: true,
-			moduleSpecifier: "@redwoodjs/graphql-server/dist/functions/types",
+			moduleSpecifier: "@redwoodjs/graphql-server/dist/types",
 			namedImports: ["RedwoodGraphQLContext"],
+		})
+	}
+
+	if (sharedInternalGraphQLObjectsReferenced.types.length) {
+		fileDTS.addImportDeclaration({
+			isTypeOnly: true,
+			moduleSpecifier: `./${settings.sharedInternalFilename.replace(".d.ts", "")}`,
+			namedImports: sharedInternalGraphQLObjectsReferenced.types.map((t) => `${t} as RT${t}`),
+		})
+	}
+
+	if (sharedGraphQLObjectsReferencedTypes.length) {
+		fileDTS.addImportDeclaration({
+			isTypeOnly: true,
+			moduleSpecifier: `./${settings.sharedFilename.replace(".d.ts", "")}`,
+			namedImports: sharedGraphQLObjectsReferencedTypes,
 		})
 	}
 
@@ -135,9 +138,20 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 	const dtsFilename = filename.endsWith(".ts") ? filename.replace(".ts", ".d.ts") : filename.replace(".js", ".d.ts")
 	const dtsFilepath = context.join(context.pathSettings.typesFolderRoot, dtsFilename)
-	fileDTS.formatText({ indentSize: 2 })
-	context.sys.writeFile(dtsFilepath, fileDTS.getText())
 
+	// Some manual formatting tweaks so we align with Redwood's setup more
+	const dts = fileDTS
+		.getText()
+		.replace(`from "graphql";`, `from "graphql";\n`)
+		.replace(`from "@redwoodjs/graphql-server/dist/types";`, `from "@redwoodjs/graphql-server/dist/types";\n`)
+
+	const shouldWriteDTS = !!dts.trim().length
+	if (!shouldWriteDTS) return
+
+	const config = getPrettierConfig(dtsFilepath)
+	const formatted = formatDTS(dtsFilepath, dts, config)
+
+	context.sys.writeFile(dtsFilepath, formatted)
 	return dtsFilepath
 
 	function addDefinitionsForTopLevelResolvers(parentName: string, config: ResolverFuncFact) {

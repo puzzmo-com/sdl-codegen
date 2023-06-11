@@ -83,7 +83,13 @@
 	},
 	"peerDependencies": {
 		"graphql": "*",
+		"prettier": "^2",
 		"typescript": "*"
+	},
+	"peerDependenciesMeta": {
+		"prettier": {
+			"optional": true
+		}
 	},
 	"packageManager": "pnpm@7.32.2",
 	"engines": {
