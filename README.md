@@ -40,11 +40,7 @@ You could think of it as a smaller, more singular focused version of the mature 
 
 This repo provides the APIs for building a codegen for framework authors, and the goal is not to provide a CLI for a generalized use-case.
 
-**Step one** is here (which is a CLi you can use): https://github.com/orta/redwood-codegen-api-types/tree/main#how-to-use-this-in-a-redwood-project
-
-**Step two** is to take the above and to start making it more generalized, but to still make it work well with RedwoodJS. **We are currently here.**
-
-**Step three** will be to make Redwood just a config option, Prisma support be some sort of plugin/option, and welcome folks who want to use this for other projects.
+It is currently [available inside RedwoodJS](https://redwoodjs.com/docs/typescript/generated-types#experimental-sdl-code-generation) as an option for experimental SDL code generation.
 
 ## Pipeline
 

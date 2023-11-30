@@ -99,12 +99,25 @@ const getResolverInformationForDeclaration = (initialiser: tsMorph.Expression | 
 
 	// resolver is a fn
 	if (initialiser.isKind(tsMorph.SyntaxKind.ArrowFunction) || initialiser.isKind(tsMorph.SyntaxKind.FunctionExpression)) {
+		// Look to see if the 2nd param is just `{ root }` - which is a super common pattern in the Puzzmo codebase
+		const params = initialiser.getParameters()
+		let infoParamType: "all" | "just_root_destructured" = "all"
+
+		if (params[1]?.getNameNode().isKind(tsMorph.SyntaxKind.ObjectBindingPattern)) {
+			const extractsInParams = params[1].getNameNode().getChildrenOfKind(tsMorph.SyntaxKind.BindingElement)
+			const extracted = extractsInParams.map((e) => e.getName())
+			if (extracted.length === 1 && extracted[0] === "root") {
+				infoParamType = "just_root_destructured"
+			}
+		}
+
 		return {
-			funcArgCount: initialiser.getParameters().length,
+			funcArgCount: params.length,
 			isFunc: true,
 			isAsync: initialiser.isAsync(),
 			isUnknown: false,
 			isObjLiteral: false,
+			infoParamType,
 		}
 	}
 

@@ -35,6 +35,7 @@ it("generates useful service facts from a (truncated) real file", () => {
 		    "resolvers": Map {
 		      "id" => {
 		        "funcArgCount": 2,
+		        "infoParamType": "just_root_destructured",
 		        "isAsync": false,
 		        "isFunc": true,
 		        "isObjLiteral": false,
@@ -43,6 +44,7 @@ it("generates useful service facts from a (truncated) real file", () => {
 		      },
 		      "user" => {
 		        "funcArgCount": 2,
+		        "infoParamType": "just_root_destructured",
 		        "isAsync": false,
 		        "isFunc": true,
 		        "isObjLiteral": false,
@@ -57,6 +59,7 @@ it("generates useful service facts from a (truncated) real file", () => {
 		    "resolvers": Map {
 		      "updateUserProfile" => {
 		        "funcArgCount": 1,
+		        "infoParamType": "all",
 		        "isAsync": false,
 		        "isFunc": true,
 		        "isObjLiteral": false,
@@ -65,6 +68,7 @@ it("generates useful service facts from a (truncated) real file", () => {
 		      },
 		      "addLeaderboardToUserProfile" => {
 		        "funcArgCount": 1,
+		        "infoParamType": "all",
 		        "isAsync": true,
 		        "isFunc": true,
 		        "isObjLiteral": false,
@@ -73,6 +77,7 @@ it("generates useful service facts from a (truncated) real file", () => {
 		      },
 		      "removeLeaderboardFromUserProfile" => {
 		        "funcArgCount": 1,
+		        "infoParamType": "all",
 		        "isAsync": true,
 		        "isFunc": true,
 		        "isObjLiteral": false,
@@ -81,6 +86,7 @@ it("generates useful service facts from a (truncated) real file", () => {
 		      },
 		      "deleteUserProfile" => {
 		        "funcArgCount": 1,
+		        "infoParamType": "all",
 		        "isAsync": false,
 		        "isFunc": true,
 		        "isObjLiteral": false,

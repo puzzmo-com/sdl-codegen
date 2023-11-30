@@ -22,6 +22,8 @@ export interface ModelResolverFacts {
 export interface ResolverFuncFact {
 	/** How many args are defined? */
 	funcArgCount: number
+	/** The type of the fn */
+	infoParamType?: "all" | "just_root_destructured"
 	/** Is it declared as an async fn */
 	isAsync: boolean
 	/** is 'function abc() {}' */

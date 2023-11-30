@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 import * as graphql from "graphql"
 
 import { AppContext } from "./context.js"
@@ -10,7 +12,6 @@ import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsFo
 export const lookAtServiceFile = (file: string, context: AppContext) => {
 	const { gql, prisma, pathSettings: settings, codeFacts: serviceFacts, fieldFacts } = context
 
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 	if (!gql) throw new Error(`No schema when wanting to look at service file: ${file}`)
 	if (!prisma) throw new Error(`No prisma schema when wanting to look at service file: ${file}`)
 
@@ -27,7 +28,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const mutationType = gql.getMutationType()!
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
 	if (!mutationType) throw new Error("No mutation type")
 
 	const externalMapper = typeMapper(context, { preferPrismaModels: true })
@@ -179,7 +180,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		if (parentName === mutationType.name) knownSpecialCasesForGraphQL.add(mutationType.name)
 
 		const argsParam = args ?? "object"
-
+		const qForInfos = config.infoParamType === "just_root_destructured" ? "?" : ""
 		const returnType = returnTypeForResolver(returnTypeMapper, field, config)
 
 		interfaceDeclaration.addCallSignature({
@@ -187,7 +188,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 				{ name: "args", type: argsParam, hasQuestionToken: config.funcArgCount < 1 },
 				{
 					name: "obj",
-					type: `{ root: ${parentName}, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }`,
+					type: `{ root: ${parentName}, context${qForInfos}: RedwoodGraphQLContext, info${qForInfos}: GraphQLResolveInfo }`,
 					hasQuestionToken: config.funcArgCount < 2,
 				},
 			],
@@ -250,7 +251,9 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 				const firstQ = resolver.funcArgCount < 1 ? "?" : ""
 				const secondQ = resolver.funcArgCount < 2 ? "?" : ""
-				const innerArgs = `args${firstQ}: ${argsType}, obj${secondQ}: { root: ${modelName}AsParent${param}, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }`
+				const qForInfos = resolver.infoParamType === "just_root_destructured" ? "?" : ""
+
+				const innerArgs = `args${firstQ}: ${argsType}, obj${secondQ}: { root: ${modelName}AsParent${param}, context${qForInfos}: RedwoodGraphQLContext, info${qForInfos}: GraphQLResolveInfo }`
 
 				const returnType = returnTypeForResolver(returnTypeMapper, field, resolver)
 
@@ -310,3 +313,4 @@ function returnTypeForResolver(mapper: TypeMapper, field: graphql.GraphQLField<u
 
 	return returnType
 }
+/* eslint-enable @typescript-eslint/no-unnecessary-condition */
