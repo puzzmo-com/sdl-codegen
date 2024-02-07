@@ -85,10 +85,12 @@ export const typeMapper = (context: AppContext, config: { preferPrismaModels?: t
 
 			if (graphql.isUnionType(type)) {
 				const types = type.getTypes()
+				referencedGraphQLTypes.add(type.name)
 				return types.map((t) => map(t, mapConfig)).join(" | ")
 			}
 
 			if (graphql.isEnumType(type)) {
+				referencedGraphQLTypes.add(type.name)
 				return prefix + type.name
 			}
 
