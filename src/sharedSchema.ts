@@ -98,6 +98,16 @@ function createSharedExternalSchemaFile(context: AppContext) {
 					'"',
 			})
 		}
+
+		if (graphql.isUnionType(type)) {
+			externalTSFile.addTypeAlias({
+				name: type.name,
+				type: type
+					.getTypes()
+					.map((m) => m.name)
+					.join(" | "),
+			})
+		}
 	})
 
 	const { scalars } = mapper.getReferencedGraphQLThingsInMapping()
@@ -178,7 +188,7 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 						const field: tsMorph.OptionalKind<tsMorph.PropertySignatureStructure> = {
 							name: fieldName,
 							type: mapper.map(obj.type, { preferNullOverUndefined: true }),
-							hasQuestionToken: hasResolverImplementation || isOptionalInSDL || doesNotExistInPrisma,
+							hasQuestionToken: hasResolverImplementation ?? (isOptionalInSDL || doesNotExistInPrisma),
 						}
 						return field
 					}),
