@@ -4,7 +4,7 @@
 	"description": "GraphQL .d.ts file generation for SDL-first projects",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/sdl-codegen/sdl-codegen"
+		"url": "https://github.com/puzzmo-com/sdl-codegen"
 	},
 	"license": "MIT",
 	"author": "Orta Therox <orta.therox@gmail.com>",
