@@ -89,6 +89,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 		if (graphql.isEnumType(type)) {
 			externalTSFile.addTypeAlias({
 				name: type.name,
+				isExported: true,
 				type:
 					'"' +
 					type
@@ -178,7 +179,7 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 						const field: tsMorph.OptionalKind<tsMorph.PropertySignatureStructure> = {
 							name: fieldName,
 							type: mapper.map(obj.type, { preferNullOverUndefined: true }),
-							hasQuestionToken: hasResolverImplementation || isOptionalInSDL || doesNotExistInPrisma,
+							hasQuestionToken: !!hasResolverImplementation || isOptionalInSDL || doesNotExistInPrisma,
 						}
 						return field
 					}),
@@ -189,6 +190,7 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 		if (graphql.isEnumType(type)) {
 			externalTSFile.addTypeAlias({
 				name: type.name,
+				isExported: true,
 				type:
 					'"' +
 					type

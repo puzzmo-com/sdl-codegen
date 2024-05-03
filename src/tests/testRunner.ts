@@ -7,9 +7,11 @@ import { Project } from "ts-morph"
 import { AppContext } from "../context.js"
 import { prismaModeller } from "../prismaModeller.js"
 import { lookAtServiceFile } from "../serviceFile.js"
+import { createSharedSchemaFiles } from "../sharedSchema.js"
 import type { CodeFacts, FieldFacts } from "../typeFacts.js"
 
 interface Run {
+	createSharedTypes?: boolean
 	gamesService?: string
 	prismaSchema?: string
 	sdl?: string
@@ -51,6 +53,10 @@ export function getDTSFilesForRun(run: Run) {
 	if (run.gamesService) {
 		vfsMap.set("/api/src/services/games.ts", run.gamesService)
 		lookAtServiceFile("/api/src/services/games.ts", appContext)
+	}
+
+	if (run.createSharedTypes) {
+		createSharedSchemaFiles(appContext)
 	}
 
 	return {
