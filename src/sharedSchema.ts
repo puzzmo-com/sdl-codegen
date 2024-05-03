@@ -89,6 +89,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 		if (graphql.isEnumType(type)) {
 			externalTSFile.addTypeAlias({
 				name: type.name,
+				isExported: true,
 				type:
 					'"' +
 					type
@@ -102,6 +103,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 		if (graphql.isUnionType(type)) {
 			externalTSFile.addTypeAlias({
 				name: type.name,
+				isExported: true,
 				type: type
 					.getTypes()
 					.map((m) => m.name)
@@ -199,6 +201,7 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 		if (graphql.isEnumType(type)) {
 			externalTSFile.addTypeAlias({
 				name: type.name,
+				isExported: true,
 				type:
 					'"' +
 					type
@@ -206,6 +209,17 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 						.map((m) => (m as { value: string }).value)
 						.join('" | "') +
 					'"',
+			})
+		}
+
+		if (graphql.isUnionType(type)) {
+			externalTSFile.addTypeAlias({
+				name: type.name,
+				isExported: true,
+				type: type
+					.getTypes()
+					.map((m) => m.name)
+					.join(" | "),
 			})
 		}
 	})

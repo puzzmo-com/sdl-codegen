@@ -47,7 +47,7 @@ export const Game = {
 		  id: number;
 		}
 
-		type Gameish = Game | Puzzle;
+		export type Gameish = Game | Puzzle;
 
 		export interface Query {
 		  __typename?: \\"Query\\";
