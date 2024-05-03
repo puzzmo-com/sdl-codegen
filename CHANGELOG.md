@@ -1,5 +1,14 @@
 # Changelog
 
+### 0.0.14
+
+- Exports the types for GraphQL unions
+
+### 0.0.13
+
+- Adds support for generating unions in the shared file
+- Fixes the references to enums in sdl args
+
 ### 0.0.10
 
 - Service files do not trigger eslint warnings in (my) app OOTB
