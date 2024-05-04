@@ -21,6 +21,7 @@ model Game {
 
 		type Query {
 			gameObj: Gameish
+			gameArr: [Gameish!]!
 		}
 	`
 
@@ -52,6 +53,7 @@ export const Game = {
 		export interface Query {
 		  __typename?: \\"Query\\";
 		  gameObj?: Game | null | Puzzle | null | null;
+		  gameArr: (Game | Puzzle)[];
 		}
 
 		export interface Mutation {

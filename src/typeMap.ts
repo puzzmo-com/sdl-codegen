@@ -46,6 +46,12 @@ export const typeMapper = (context: AppContext, config: { preferPrismaModels?: t
 				if (!typeStr) return "any"
 
 				if (graphql.isNonNullType(type.ofType)) {
+					// If its a union type, we need to wrap it in brackets
+					// so that the [] is not applied to the last union itemu
+					if (typeStr.includes("|")) {
+						return `(${typeStr})[]`
+					}
+
 					return `${typeStr}[]`
 				} else {
 					return `Array<${typeStr}>`
