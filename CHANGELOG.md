@@ -1,5 +1,9 @@
 # Changelog
 
+### 1.0
+
+- No changes
+
 ### 0.0.14
 
 - Exports the types for GraphQL unions

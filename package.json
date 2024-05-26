@@ -1,6 +1,6 @@
 {
 	"name": "@sdl-codegen/node",
-	"version": "0.0.15",
+	"version": "1.0.0",
 	"description": "GraphQL .d.ts file generation for SDL-first projects",
 	"repository": {
 		"type": "git",
@@ -38,8 +38,8 @@
 		"*.ts": "eslint --fix  --max-warnings 0"
 	},
 	"dependencies": {
-		"@mrleebo/prisma-ast": "^0.5.2",
-		"ts-morph": "^18.0.0"
+		"@mrleebo/prisma-ast": "^0.12.0",
+		"ts-morph": "^22.0.0"
 	},
 	"devDependencies": {
 		"@babel/core": "^7.20.12",
