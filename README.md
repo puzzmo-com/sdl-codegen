@@ -1,4 +1,4 @@
-<h1 align="center">SDL Codegen</h1>
+<h1 align="center">SDL-Codegen</h1>
 
 <p align="center">GraphQL .d.ts file generation for SDL-first projects</p>
 
