@@ -1,4 +1,3 @@
-/* eslint-disable */
 // https://prettier.io/docs/en/api.html
 
 let prettier: any | null = null
@@ -25,5 +24,3 @@ export const formatDTS = (path: string, content: string, config: unknown): strin
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 	return prettier.default.format(content, { ...(config as object), filepath: path }) as string
 }
-
-/* eslint-enable */
