@@ -21,7 +21,7 @@
 		"format": "prettier \"**/*\" --ignore-unknown",
 		"format:write": "pnpm format --write",
 		"jest": "vitest",
-		"lint": "eslint . --max-warnings 0 --report-unused-disable-directives",
+		"lint": "eslint . --report-unused-disable-directives",
 		"lint:knip": "knip",
 		"lint:md": "markdownlint \"**/*.md\" \".github/**/*.md\" --rules sentences-per-line",
 		"lint:package": "npmPkgJsonLint .",
@@ -35,7 +35,7 @@
 	},
 	"lint-staged": {
 		"*": "prettier --ignore-unknown --write",
-		"*.ts": "eslint --fix  --max-warnings 0"
+		"*.ts": "eslint --fix"
 	},
 	"dependencies": {
 		"@mrleebo/prisma-ast": "^0.12.0",

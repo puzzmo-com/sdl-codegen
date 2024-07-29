@@ -4,3 +4,4 @@ lib
 node_modules
 pnpm-lock.yaml
 src/tests/vendor
+src/formatDTS.ts

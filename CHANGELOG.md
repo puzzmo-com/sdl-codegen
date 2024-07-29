@@ -1,5 +1,9 @@
 # Changelog
 
+### 1.0.2
+
+- Better prettier detection (and fallback) for the generated files, re #14
+
 ### 1.0
 
 - No changes
