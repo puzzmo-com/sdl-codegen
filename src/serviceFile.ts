@@ -306,8 +306,6 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 		fieldFacts.set(modelName, modelFieldFacts)
 	}
-
-	return dtsFilename
 }
 
 function returnTypeForResolver(mapper: TypeMapper, field: graphql.GraphQLField<unknown, unknown> | undefined, resolver: ResolverFuncFact) {
