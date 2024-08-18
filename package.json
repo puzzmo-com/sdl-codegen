@@ -1,6 +1,6 @@
 {
 	"name": "@sdl-codegen/node",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "GraphQL .d.ts file generation for SDL-first projects",
 	"repository": {
 		"type": "git",
