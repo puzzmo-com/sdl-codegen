@@ -86,6 +86,7 @@ export const typeMapper = (context: AppContext, config: { preferPrismaModels?: t
 			}
 
 			if (graphql.isInterfaceType(type)) {
+				referencedGraphQLTypes.add(type.name)
 				return prefix + type.name
 			}
 
