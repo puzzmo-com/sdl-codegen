@@ -15,13 +15,23 @@ export * from "./types.js"
 
 import { basename, join } from "node:path"
 
-/** The API specifically for Redwood */
-export function runFullCodegen(preset: "redwood", config: { paths: RedwoodPaths }): { paths: string[] }
+interface SDLCodeGenReturn {
+	// Optional way to start up a watcher mode for the codegen
+	createWatcher: () => { fileChanged: (path: string) => void }
+	// Paths which were added/changed during the run
+	paths: string[]
+}
 
-export function runFullCodegen(preset: string, config: unknown): { paths: string[] }
+/** The API specifically for the Redwood preset */
+export function runFullCodegen(preset: "redwood", config: { paths: RedwoodPaths; verbose?: true }): SDLCodeGenReturn
 
-export function runFullCodegen(preset: string, config: unknown): { paths: string[] } {
+export function runFullCodegen(preset: string, config: unknown): SDLCodeGenReturn
+
+export function runFullCodegen(preset: string, config: unknown): SDLCodeGenReturn {
 	if (preset !== "redwood") throw new Error("Only Redwood codegen is supported at this time")
+	const verbose = (config as { verbose?: true }).verbose
+	const startTime = Date.now()
+
 	const paths = (config as { paths: RedwoodPaths }).paths
 	const sys = typescript.sys
 
@@ -69,27 +79,64 @@ export function runFullCodegen(preset: string, config: unknown): { paths: string
 		basename,
 	}
 
-	// TODO: Maybe Redwood has an API for this? Its grabbing all the services
-	const serviceFiles = appContext.sys.readDirectory(appContext.pathSettings.apiServicesPath)
-	const serviceFilesToLookAt = serviceFiles.filter((file) => {
-		if (file.endsWith(".test.ts")) return false
-		if (file.endsWith("scenarios.ts")) return false
-		return file.endsWith(".ts") || file.endsWith(".tsx") || file.endsWith(".js")
-	})
-
+	// All changed files
 	const filepaths = [] as string[]
 
 	// Create the two shared schema files
 	const sharedDTSes = createSharedSchemaFiles(appContext)
 	filepaths.push(...sharedDTSes)
 
-	// This needs to go first, as it sets up fieldFacts
-	for (const path of serviceFilesToLookAt) {
-		const dts = lookAtServiceFile(path, appContext)
-		if (dts) filepaths.push(dts)
+	let knownServiceFiles: string[] = []
+	const createDTSFilesForAllServices = () => {
+		// TODO: Maybe Redwood has an API for this? Its grabbing all the services
+		const serviceFiles = appContext.sys.readDirectory(appContext.pathSettings.apiServicesPath)
+		knownServiceFiles = serviceFiles.filter(isRedwoodServiceFile)
+		for (const path of knownServiceFiles) {
+			const dts = lookAtServiceFile(path, appContext)
+			if (dts) filepaths.push(dts)
+		}
+	}
+
+	// Initial run
+	createDTSFilesForAllServices()
+	const endTime = Date.now()
+	const timeTaken = endTime - startTime
+
+	if (verbose) console.log(`[sdl-codegen]: Full run took ${timeTaken}ms`)
+
+	const createWatcher = () => {
+		return {
+			fileChanged: (path: string) => {
+				if (path === appContext.pathSettings.graphQLSchemaPath) {
+					if (verbose) console.log("[sdl-codegen] SDL Schema changed")
+					getGraphQLSDLFromFile(appContext.pathSettings)
+					createSharedSchemaFiles(appContext)
+					createDTSFilesForAllServices()
+				} else if (path === appContext.pathSettings.prismaDSLPath) {
+					if (verbose) console.log("[sdl-codegen] Prisma schema changed")
+					getPrismaSchemaFromFile(appContext.pathSettings)
+					createDTSFilesForAllServices()
+				} else if (isRedwoodServiceFile(path)) {
+					if (knownServiceFiles.includes(path)) {
+						if (verbose) console.log("[sdl-codegen] New service file")
+						createDTSFilesForAllServices()
+					} else {
+						if (verbose) console.log("[sdl-codegen] Service file changed")
+						lookAtServiceFile(path, appContext)
+					}
+				}
+			},
+		}
 	}
 
 	return {
 		paths: filepaths,
+		createWatcher,
 	}
+}
+
+const isRedwoodServiceFile = (file: string) => {
+	if (file.endsWith(".test.ts") || file.endsWith(".test.js")) return false
+	if (file.endsWith("scenarios.ts") || file.endsWith("scenarios.js")) return false
+	return file.endsWith(".ts") || file.endsWith(".tsx") || file.endsWith(".js")
 }

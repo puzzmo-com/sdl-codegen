@@ -1,23 +1,25 @@
 // https://prettier.io/docs/en/api.html
 
-let prettier: any | null = null
+let hasPrettierInstalled = false
 try {
-	prettier = await import("prettier")
-} catch (er) {
-	console.error(er)
-	prettier = null
-}
+	hasPrettierInstalled = !!require.resolve("prettier")
+} catch (error) {}
+
+import * as prettier from "@prettier/sync"
 
 export const getPrettierConfig = (path: string): unknown => {
+	if (!hasPrettierInstalled) return {}
+
 	if (!prettier?.default?.resolveConfig) return {}
 	if (typeof prettier.default.resolveConfig !== "function") return {}
 
 	// I confirmed that this lookup hits caches in RedwoodJS
-	const opts = prettier.default.resolveConfig.sync(path) ?? {}
-	return opts
+	return prettier.default.resolveConfig(path) ?? {}
 }
 
 export const formatDTS = (path: string, content: string, config: unknown): string => {
+	if (!hasPrettierInstalled) return content
+
 	if (!prettier?.default?.format) return content
 	if (typeof prettier.default.format !== "function") return content
 

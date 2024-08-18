@@ -152,6 +152,10 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	const config = getPrettierConfig(dtsFilepath)
 	const formatted = formatDTS(dtsFilepath, dts, config)
 
+	// Don't make a file write if the content is the same
+	const priorContent = context.sys.readFile(dtsFilename)
+	if (priorContent === formatted) return
+
 	context.sys.writeFile(dtsFilepath, formatted)
 	return dtsFilepath
 
