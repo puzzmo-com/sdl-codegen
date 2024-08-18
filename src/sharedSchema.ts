@@ -125,7 +125,9 @@ function createSharedExternalSchemaFile(context: AppContext) {
 	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename)
 	const config = getPrettierConfig(fullPath)
 	const formatted = formatDTS(fullPath, externalTSFile.getText(), config)
-	context.sys.writeFile(fullPath, formatted)
+
+	const prior = context.sys.readFile(fullPath)
+	if (prior !== formatted) context.sys.writeFile(fullPath, formatted)
 }
 
 function createSharedReturnPositionSchemaFile(context: AppContext) {
@@ -254,5 +256,7 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedInternalFilename)
 	const config = getPrettierConfig(fullPath)
 	const formatted = formatDTS(fullPath, externalTSFile.getText(), config)
-	context.sys.writeFile(fullPath, formatted)
+
+	const prior = context.sys.readFile(fullPath)
+	if (prior !== formatted) context.sys.writeFile(fullPath, formatted)
 }

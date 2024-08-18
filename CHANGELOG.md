@@ -1,5 +1,15 @@
 # Changelog
 
+### 1.1.0
+
+- Adds a watcher function to the return value of`createWatcher` which allows tools to be able to hook in and let SDL Codegen only re-generate what's needed.
+
+- Adds a `verbose` flag which offers some timing logs, and watcher logs.
+
+- Service file d.ts, and shared schema .d.ts' do not write to the file if the content hasn't changed to avoid triggering watchers.
+
+- Better handling of modern prettier versions
+
 ### 1.0.2
 
 - Better prettier detection (and fallback) for the generated files, re #14

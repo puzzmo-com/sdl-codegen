@@ -8,6 +8,6 @@ runs:
       with:
         cache: pnpm
         node-version: "18"
-    - run: pnpm install --frozen-lockfile
+    - run: pnpm install
       shell: bash
   using: composite
