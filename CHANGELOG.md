@@ -10,6 +10,8 @@
 
 - Better handling of modern prettier versions
 
+- Improvements to codegen when using GraphQL types and interfaces in parent or return positions
+
 ### 1.0.2
 
 - Better prettier detection (and fallback) for the generated files, re #14

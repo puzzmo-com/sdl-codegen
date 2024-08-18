@@ -40,6 +40,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 
 	// Tracks prospective prisma models which are used in the file
 	const extraPrismaReferences = new Set<string>()
+	const extraSharedFileImportReferences = new Set<{ import: string; name?: string }>()
 
 	// The file we'll be creating in-memory throughout this fn
 	const fileDTS = context.tsProject.createSourceFile(`source/${fileKey}.d.ts`, "", { overwrite: true })
@@ -119,11 +120,14 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 		})
 	}
 
-	if (sharedInternalGraphQLObjectsReferenced.types.length) {
+	if (sharedInternalGraphQLObjectsReferenced.types.length || extraSharedFileImportReferences.size) {
 		fileDTS.addImportDeclaration({
 			isTypeOnly: true,
 			moduleSpecifier: `./${settings.sharedInternalFilename.replace(".d.ts", "")}`,
-			namedImports: sharedInternalGraphQLObjectsReferenced.types.map((t) => `${t} as RT${t}`),
+			namedImports: [
+				...sharedInternalGraphQLObjectsReferenced.types.map((t) => `${t} as RT${t}`),
+				...[...extraSharedFileImportReferences.values()].map((t) => ("name" in t && t.name ? `${t.import} as ${t.name}` : t.import)),
+			],
 		})
 	}
 
@@ -232,12 +236,16 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 			isExported: true,
 		})
 
+		// Handle extending classes in the runtime which only exist in SDL
+		const parentIsPrisma = prisma.has(modelName)
+		if (!parentIsPrisma) extraSharedFileImportReferences.add({ name: `S${modelName}`, import: modelName })
+		const suffix = parentIsPrisma ? "P" : "S"
+
 		// The parent type for the resolvers
 		fileDTS.addTypeAlias({
 			name: `${modelName}AsParent`,
 			typeParameters: hasGenerics ? ["Extended"] : [],
-			type: `P${modelName} ${createParentAdditionallyDefinedFunctions()} ${hasGenerics ? " & Extended" : ""}`,
-			// docs: ["The prisma model, mixed with fns already defined inside the resolvers."],
+			type: `${suffix}${modelName} ${createParentAdditionallyDefinedFunctions()} ${hasGenerics ? " & Extended" : ""}`,
 		})
 
 		const modelFieldFacts = fieldFacts.get(modelName) ?? {}
