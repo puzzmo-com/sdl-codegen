@@ -12,6 +12,8 @@
 
 - Improvements to codegen when using GraphQL types and interfaces in parent or return positions
 
+- When a resolver is simply a fn to a literal, narrow to that exact type in the codegen (instead of keeping the optional promise type)
+
 ### 1.0.2
 
 - Better prettier detection (and fallback) for the generated files, re #14

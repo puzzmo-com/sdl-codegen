@@ -111,26 +111,24 @@ const getResolverInformationForDeclaration = (initialiser: tsMorph.Expression | 
 			}
 		}
 
+		let isObjLiteral = false
+		if (initialiser.isKind(tsMorph.SyntaxKind.ArrowFunction)) {
+			const isSingleLiner = initialiser.getStatements().length === 0
+			if (isSingleLiner) isObjLiteral = isLiteral(initialiser.getBody())
+		}
+
 		return {
 			funcArgCount: params.length,
 			isFunc: true,
 			isAsync: initialiser.isAsync(),
 			isUnknown: false,
-			isObjLiteral: false,
+			isObjLiteral,
 			infoParamType,
 		}
 	}
 
 	// resolver is a raw obj
-	if (
-		initialiser.isKind(tsMorph.SyntaxKind.ObjectLiteralExpression) ||
-		initialiser.isKind(tsMorph.SyntaxKind.StringLiteral) ||
-		initialiser.isKind(tsMorph.SyntaxKind.NumericLiteral) ||
-		initialiser.isKind(tsMorph.SyntaxKind.TrueKeyword) ||
-		initialiser.isKind(tsMorph.SyntaxKind.FalseKeyword) ||
-		initialiser.isKind(tsMorph.SyntaxKind.NullKeyword) ||
-		initialiser.isKind(tsMorph.SyntaxKind.UndefinedKeyword)
-	) {
+	if (isLiteral(initialiser)) {
 		return {
 			funcArgCount: 0,
 			isFunc: false,
@@ -149,3 +147,13 @@ const getResolverInformationForDeclaration = (initialiser: tsMorph.Expression | 
 		isObjLiteral: false,
 	}
 }
+
+const isLiteral = (node: tsMorph.Node) =>
+	node.isKind(tsMorph.SyntaxKind.ObjectLiteralExpression) ||
+	node.isKind(tsMorph.SyntaxKind.StringLiteral) ||
+	node.isKind(tsMorph.SyntaxKind.TemplateExpression) ||
+	node.isKind(tsMorph.SyntaxKind.NumericLiteral) ||
+	node.isKind(tsMorph.SyntaxKind.TrueKeyword) ||
+	node.isKind(tsMorph.SyntaxKind.FalseKeyword) ||
+	node.isKind(tsMorph.SyntaxKind.NullKeyword) ||
+	node.isKind(tsMorph.SyntaxKind.UndefinedKeyword)
