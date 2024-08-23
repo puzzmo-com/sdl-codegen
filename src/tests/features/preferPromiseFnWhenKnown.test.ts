@@ -71,7 +71,7 @@ export const Game = {
 		      context: RedwoodGraphQLContext;
 		      info: GraphQLResolveInfo;
 		    }
-		  ): RTGame | null;
+		  ): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
 
 		/** SDL: gameAsync: Game */
@@ -95,7 +95,7 @@ export const Game = {
 		      context: RedwoodGraphQLContext;
 		      info: GraphQLResolveInfo;
 		    }
-		  ): RTGame | null;
+		  ): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
 
 		/** SDL: gameAsync2Arg: Game */
@@ -107,7 +107,7 @@ export const Game = {
 		      context: RedwoodGraphQLContext;
 		      info: GraphQLResolveInfo;
 		    }
-		  ): RTGame | null;
+		  ): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
 
 		/** SDL: gameObj: Game */
@@ -134,7 +134,7 @@ export const Game = {
 		      context: RedwoodGraphQLContext;
 		      info: GraphQLResolveInfo;
 		    }
-		  ) => string | Promise<string> | (() => Promise<string>);
+		  ) => string;
 
 		  /** SDL: summarySyncBlock: String! */
 		  summarySyncBlock: (
@@ -144,7 +144,7 @@ export const Game = {
 		      context: RedwoodGraphQLContext;
 		      info: GraphQLResolveInfo;
 		    }
-		  ) => string;
+		  ) => string | Promise<string> | (() => Promise<string>);
 
 		  /** SDL: summaryAsync: String! */
 		  summaryAsync: (
@@ -159,8 +159,8 @@ export const Game = {
 
 		type GameAsParent<Extended> = PGame & {
 		  summary: () => string;
-		  summarySync: () => string | Promise<string> | (() => Promise<string>);
-		  summarySyncBlock: () => string;
+		  summarySync: () => string;
+		  summarySyncBlock: () => string | Promise<string> | (() => Promise<string>);
 		  summaryAsync: () => Promise<string>;
 		} & Extended;"
 	`)

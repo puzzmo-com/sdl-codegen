@@ -317,7 +317,7 @@ function returnTypeForResolver(mapper: TypeMapper, field: graphql.GraphQLField<u
 	const all = `${tType} | Promise<${tType}> | (() => Promise<${tType}>)`
 
 	if (resolver.isFunc && resolver.isAsync) returnType = `Promise<${tType}>`
-	else if (resolver.isFunc && !resolver.isObjLiteral) returnType = tType
+	else if (resolver.isFunc && resolver.isObjLiteral) returnType = tType
 	else if (resolver.isFunc) returnType = all
 	else if (resolver.isObjLiteral) returnType = tType
 	else if (resolver.isUnknown) returnType = all

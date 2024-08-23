@@ -48,9 +48,11 @@ export const Game = {
 		      context: RedwoodGraphQLContext;
 		      info: GraphQLResolveInfo;
 		    }
-		  ) => RTNode;
+		  ) => RTNode | Promise<RTNode> | (() => Promise<RTNode>);
 		}
 
-		type GameAsParent = PGame & { puzzle: () => RTNode };"
+		type GameAsParent = PGame & {
+		  puzzle: () => RTNode | Promise<RTNode> | (() => Promise<RTNode>);
+		};"
 	`)
 })

@@ -58,7 +58,7 @@ export const Game = {
 		      context: RedwoodGraphQLContext;
 		      info: GraphQLResolveInfo;
 		    }
-		  ): RTGame | null;
+		  ): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
 		}
 
 		export interface GameTypeResolvers {
@@ -70,12 +70,10 @@ export const Game = {
 		      context?: RedwoodGraphQLContext;
 		      info?: GraphQLResolveInfo;
 		    }
-		  ) => string | Promise<string> | (() => Promise<string>);
+		  ) => string;
 		}
 
-		type GameAsParent = PGame & {
-		  summary: () => string | Promise<string> | (() => Promise<string>);
-		};
+		type GameAsParent = PGame & { summary: () => string };
 		"
 	`
 	)

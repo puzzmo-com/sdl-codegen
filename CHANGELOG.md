@@ -1,5 +1,11 @@
 # Changelog
 
+### 1.1.2
+
+Removed this because its over-reaching:
+
+- When a resolver is simply a fn to a literal, narrow to that exact type in the codegen (instead of keeping the optional promise type)
+
 ### 1.1.0
 
 - Adds a watcher function to the return value of`createWatcher` which allows tools to be able to hook in and let SDL Codegen only re-generate what's needed.
@@ -12,7 +18,7 @@
 
 - Improvements to codegen when using GraphQL types and interfaces in parent or return positions
 
-- When a resolver is simply a fn to a literal, narrow to that exact type in the codegen (instead of keeping the optional promise type)
+- ~~When a resolver is simply a fn to a literal, narrow to that exact type in the codegen (instead of keeping the optional promise type)~~
 
 ### 1.0.2
 
