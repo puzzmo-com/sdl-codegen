@@ -2,7 +2,8 @@
 
 ### 2.0.0
 
-Redwood uses prettier 3, and prettier 3 removes the sync API. This means we now have to operate entirely async. This is a breaking change from the sdl-codegen API, as you need to await the exposed public fns.
+- Redwood uses prettier 3, and prettier 3 removes the sync API. This means we now have to operate entirely async. This is a breaking change from the sdl-codegen API, as you need to await the exposed public fns.
+- There is a verbose option which provides info on the timings of the codegen.
 
 ### 1.1.2
 

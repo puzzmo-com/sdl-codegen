@@ -28,8 +28,9 @@ export async function runFullCodegen(preset: string, config: unknown): Promise<S
 
 export async function runFullCodegen(preset: string, config: unknown): Promise<SDLCodeGenReturn> {
 	if (preset !== "redwood") throw new Error("Only Redwood codegen is supported at this time")
-	const verbose = (config as { verbose?: true }).verbose
+	const verbose = !!(config as { verbose?: true }).verbose
 	const startTime = Date.now()
+	const step = makeStep(verbose)
 
 	const paths = (config as { paths: RedwoodPaths }).paths
 	const sys = typescript.sys
@@ -61,8 +62,8 @@ export async function runFullCodegen(preset: string, config: unknown): Promise<S
 		prismaSchema = prismaModeller(prismaSchemaBlocks)
 	}
 
-	getGraphQLSDLFromFile(pathSettings)
-	getPrismaSchemaFromFile(pathSettings)
+	await step("Read the GraphQL schema", () => getGraphQLSDLFromFile(pathSettings))
+	await step("Read the Prisma schema", () => getPrismaSchemaFromFile(pathSettings))
 
 	if (!gqlSchema) throw new Error("No GraphQL Schema was created during setup")
 
@@ -82,8 +83,10 @@ export async function runFullCodegen(preset: string, config: unknown): Promise<S
 	const filepaths = [] as string[]
 
 	// Create the two shared schema files
-	const sharedDTSes = await createSharedSchemaFiles(appContext)
-	filepaths.push(...sharedDTSes)
+	await step("Create shared schema files", async () => {
+		const sharedDTSes = await createSharedSchemaFiles(appContext)
+		filepaths.push(...sharedDTSes)
+	})
 
 	let knownServiceFiles: string[] = []
 	const createDTSFilesForAllServices = async () => {
@@ -97,10 +100,10 @@ export async function runFullCodegen(preset: string, config: unknown): Promise<S
 	}
 
 	// Initial run
-	await createDTSFilesForAllServices()
+	await step("Create DTS files for all services", createDTSFilesForAllServices)
+
 	const endTime = Date.now()
 	const timeTaken = endTime - startTime
-
 	if (verbose) console.log(`[sdl-codegen]: Full run took ${timeTaken}ms`)
 
 	const createWatcher = () => {
@@ -116,7 +119,7 @@ export async function runFullCodegen(preset: string, config: unknown): Promise<S
 					getPrismaSchemaFromFile(appContext.pathSettings)
 					await createDTSFilesForAllServices()
 				} else if (isRedwoodServiceFile(path)) {
-					if (knownServiceFiles.includes(path)) {
+					if (!knownServiceFiles.includes(path)) {
 						if (verbose) console.log("[sdl-codegen] New service file")
 						await createDTSFilesForAllServices()
 					} else {
@@ -138,4 +141,11 @@ const isRedwoodServiceFile = (file: string) => {
 	if (file.endsWith(".test.ts") || file.endsWith(".test.js")) return false
 	if (file.endsWith("scenarios.ts") || file.endsWith("scenarios.js")) return false
 	return file.endsWith(".ts") || file.endsWith(".tsx") || file.endsWith(".js")
+}
+
+const makeStep = (verbose: boolean) => async (msg: string, fn: () => Promise<void> | void) => {
+	if (!verbose) return fn()
+	console.time(msg)
+	await fn()
+	console.timeEnd(msg)
 }
