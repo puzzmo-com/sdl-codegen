@@ -10,7 +10,6 @@ import { createSharedSchemaFiles } from "./sharedSchema.js"
 import { CodeFacts, FieldFacts } from "./typeFacts.js"
 import { RedwoodPaths } from "./types.js"
 
-export * from "./main.js"
 export * from "./types.js"
 
 import { basename, join } from "node:path"
