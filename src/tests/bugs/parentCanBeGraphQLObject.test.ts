@@ -2,7 +2,7 @@ import { expect, it } from "vitest"
 
 import { getDTSFilesForRun, graphql, prisma } from "../testRunner.js"
 
-it("Uses GraphQL objects when prisma objects are not available for resolver parents", () => {
+it("Uses GraphQL objects when prisma objects are not available for resolver parents", async () => {
 	const prismaSchema = prisma`
 	model Game {
 		id Int @id @default(autoincrement())
@@ -27,7 +27,7 @@ export const Puzzle = {
 };
 `
 
-	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService, prismaSchema })
+	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService, prismaSchema })
 	const dts = vfsMap.get("/types/games.d.ts")!
 	expect(dts.trim()).toMatchInlineSnapshot(`
 		"import type { Puzzle as SPuzzle } from \\"./shared-return-types\\";

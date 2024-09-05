@@ -23,11 +23,11 @@ interface SDLCodeGenReturn {
 }
 
 /** The API specifically for the Redwood preset */
-export function runFullCodegen(preset: "redwood", config: { paths: RedwoodPaths; verbose?: true }): SDLCodeGenReturn
+export async function runFullCodegen(preset: "redwood", config: { paths: RedwoodPaths; verbose?: true }): Promise<SDLCodeGenReturn>
 
-export function runFullCodegen(preset: string, config: unknown): SDLCodeGenReturn
+export async function runFullCodegen(preset: string, config: unknown): Promise<SDLCodeGenReturn>
 
-export function runFullCodegen(preset: string, config: unknown): SDLCodeGenReturn {
+export async function runFullCodegen(preset: string, config: unknown): Promise<SDLCodeGenReturn> {
 	if (preset !== "redwood") throw new Error("Only Redwood codegen is supported at this time")
 	const verbose = (config as { verbose?: true }).verbose
 	const startTime = Date.now()
@@ -83,22 +83,22 @@ export function runFullCodegen(preset: string, config: unknown): SDLCodeGenRetur
 	const filepaths = [] as string[]
 
 	// Create the two shared schema files
-	const sharedDTSes = createSharedSchemaFiles(appContext)
+	const sharedDTSes = await createSharedSchemaFiles(appContext)
 	filepaths.push(...sharedDTSes)
 
 	let knownServiceFiles: string[] = []
-	const createDTSFilesForAllServices = () => {
+	const createDTSFilesForAllServices = async () => {
 		// TODO: Maybe Redwood has an API for this? Its grabbing all the services
 		const serviceFiles = appContext.sys.readDirectory(appContext.pathSettings.apiServicesPath)
 		knownServiceFiles = serviceFiles.filter(isRedwoodServiceFile)
 		for (const path of knownServiceFiles) {
-			const dts = lookAtServiceFile(path, appContext)
+			const dts = await lookAtServiceFile(path, appContext)
 			if (dts) filepaths.push(dts)
 		}
 	}
 
 	// Initial run
-	createDTSFilesForAllServices()
+	await createDTSFilesForAllServices()
 	const endTime = Date.now()
 	const timeTaken = endTime - startTime
 
@@ -106,23 +106,23 @@ export function runFullCodegen(preset: string, config: unknown): SDLCodeGenRetur
 
 	const createWatcher = () => {
 		return {
-			fileChanged: (path: string) => {
+			fileChanged: async (path: string) => {
 				if (path === appContext.pathSettings.graphQLSchemaPath) {
 					if (verbose) console.log("[sdl-codegen] SDL Schema changed")
 					getGraphQLSDLFromFile(appContext.pathSettings)
-					createSharedSchemaFiles(appContext)
-					createDTSFilesForAllServices()
+					await createSharedSchemaFiles(appContext)
+					await createDTSFilesForAllServices()
 				} else if (path === appContext.pathSettings.prismaDSLPath) {
 					if (verbose) console.log("[sdl-codegen] Prisma schema changed")
 					getPrismaSchemaFromFile(appContext.pathSettings)
-					createDTSFilesForAllServices()
+					await createDTSFilesForAllServices()
 				} else if (isRedwoodServiceFile(path)) {
 					if (knownServiceFiles.includes(path)) {
 						if (verbose) console.log("[sdl-codegen] New service file")
-						createDTSFilesForAllServices()
+						await createDTSFilesForAllServices()
 					} else {
 						if (verbose) console.log("[sdl-codegen] Service file changed")
-						lookAtServiceFile(path, appContext)
+						await lookAtServiceFile(path, appContext)
 					}
 				}
 			},

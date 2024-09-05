@@ -2,7 +2,7 @@ import { expect, it } from "vitest"
 
 import { getDTSFilesForRun, graphql, prisma } from "../testRunner.js"
 
-it("generates a union type for a gql union", () => {
+it("generates a union type for a gql union", async () => {
 	const prismaSchema = prisma`
 model Game {
     id            Int          @id @default(autoincrement())
@@ -35,7 +35,7 @@ export const Game = {
 };
 `
 
-	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService, prismaSchema, generateShared: true })
+	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService, prismaSchema, generateShared: true })
 	const dts = vfsMap.get("/types/shared-schema-types.d.ts")!
 	expect(dts.trim()).toMatchInlineSnapshot(`
 		"export interface Game {

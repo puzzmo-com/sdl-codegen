@@ -2,7 +2,7 @@ import { expect, it } from "vitest"
 
 import { getDTSFilesForRun, graphql, prisma } from "../testRunner.js"
 
-it("The retunr type can be a graphql interface", () => {
+it("The retunr type can be a graphql interface", async () => {
 	const prismaSchema = prisma`
 	model Game {
 		id Int @id @default(autoincrement())
@@ -28,7 +28,7 @@ export const Game = {
 };
 `
 
-	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService, prismaSchema })
+	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService, prismaSchema })
 	const dts = vfsMap.get("/types/games.d.ts")!
 	expect(dts.trim()).toMatchInlineSnapshot(`
 		"import type { Game as PGame } from \\"@prisma/client\\";

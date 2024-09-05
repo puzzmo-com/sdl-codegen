@@ -2,7 +2,7 @@ import { expect, it } from "vitest"
 
 import { getDTSFilesForRun, graphql, prisma } from "../testRunner.js"
 
-it("supports a return position where a prisma object can be given, if the extra fn are defined as resolvers", () => {
+it("supports a return position where a prisma object can be given, if the extra fn are defined as resolvers", async () => {
 	const prismaSchema = prisma`
 model Game {
     id            Int          @id @default(autoincrement())
@@ -36,7 +36,7 @@ export const Game = {
 };
 `
 
-	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService: services, prismaSchema })
+	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService: services, prismaSchema })
 	const dts = vfsMap.get("/types/games.d.ts")!
 
 	expect(dts.trimStart()).toMatchInlineSnapshot(

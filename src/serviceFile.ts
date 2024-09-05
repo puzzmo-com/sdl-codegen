@@ -3,13 +3,13 @@
 import * as graphql from "graphql"
 
 import { AppContext } from "./context.js"
-import { formatDTS, getPrettierConfig } from "./formatDTS.js"
+import { formatDTS } from "./formatDTS.js"
 import { getCodeFactsForJSTSFileAtPath } from "./serviceFile.codefacts.js"
 import { CodeFacts, ModelResolverFacts, ResolverFuncFact } from "./typeFacts.js"
 import { TypeMapper, typeMapper } from "./typeMap.js"
 import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField } from "./utils.js"
 
-export const lookAtServiceFile = (file: string, context: AppContext) => {
+export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	const { gql, prisma, pathSettings: settings, codeFacts: serviceFacts, fieldFacts } = context
 
 	if (!gql) throw new Error(`No schema when wanting to look at service file: ${file}`)
@@ -153,8 +153,7 @@ export const lookAtServiceFile = (file: string, context: AppContext) => {
 	const shouldWriteDTS = !!dts.trim().length
 	if (!shouldWriteDTS) return
 
-	const config = getPrettierConfig(dtsFilepath)
-	const formatted = formatDTS(dtsFilepath, dts, config)
+	const formatted = await formatDTS(dtsFilepath, dts)
 
 	// Don't make a file write if the content is the same
 	const priorContent = context.sys.readFile(dtsFilename)

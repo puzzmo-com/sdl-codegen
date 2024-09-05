@@ -5,8 +5,8 @@ import { getCodeFactsForJSTSFileAtPath } from "../serviceFile.codefacts.js"
 import { lookAtServiceFile } from "../serviceFile.js"
 import { getDTSFilesForRun } from "./testRunner.js"
 
-it("reads a service file", () => {
-	const { appContext, vfsMap } = getDTSFilesForRun({})
+it("reads a service file", async () => {
+	const { appContext, vfsMap } = await getDTSFilesForRun({})
 
 	vfsMap.set(
 		"/api/src/services/example.ts",
@@ -17,13 +17,13 @@ export function game2() {}
 	)
 
 	expect(vfsMap.has("/types/example.d.ts")).toBeFalsy()
-	lookAtServiceFile("/api/src/services/example.ts", appContext)
+	await lookAtServiceFile("/api/src/services/example.ts", appContext)
 
 	// this isn't really very useful as a test, but it proves it doesn't crash?
 })
 
-it("generates useful service facts from a (truncated) real file", () => {
-	const { appContext, vfsMap } = getDTSFilesForRun({})
+it("generates useful service facts from a (truncated) real file", async () => {
+	const { appContext, vfsMap } = await getDTSFilesForRun({})
 
 	vfsMap.set("/api/src/services/userProfile.ts", readFileSync("./src/tests/vendor/puzzmo/one-offs/userProfiles.ts", "utf8"))
 

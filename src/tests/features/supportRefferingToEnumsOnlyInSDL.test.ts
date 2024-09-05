@@ -2,7 +2,7 @@ import { expect, it } from "vitest"
 
 import { getDTSFilesForRun, graphql, prisma } from "../testRunner.js"
 
-it("It adds a reference to the graphql enums you use", () => {
+it("It adds a reference to the graphql enums you use", async () => {
 	const prismaSchema = prisma`
 model Game {
     id            Int          @id @default(autoincrement())
@@ -33,7 +33,7 @@ export const allGames = () => {}
 export const Game: GameResolvers = {};
 `
 
-	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService: services, prismaSchema, generateShared: true })
+	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService: services, prismaSchema, generateShared: true })
 
 	// We are expecting to see import type GameType from "./shared-schema-types"
 
