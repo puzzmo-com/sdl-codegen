@@ -18,6 +18,7 @@
 	],
 	"scripts": {
 		"build": "tsc",
+		"build:watch": "tsc --watch",
 		"format": "prettier \"**/*\" --ignore-unknown",
 		"format:write": "pnpm format --write",
 		"jest": "vitest",

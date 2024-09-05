@@ -14,9 +14,9 @@ export * from "./types.js"
 
 import { basename, join } from "node:path"
 
-interface SDLCodeGenReturn {
+export interface SDLCodeGenReturn {
 	// Optional way to start up a watcher mode for the codegen
-	createWatcher: () => { fileChanged: (path: string) => void }
+	createWatcher: () => { fileChanged: (path: string) => Promise<void> }
 	// Paths which were added/changed during the run
 	paths: string[]
 }
@@ -107,24 +107,27 @@ export async function runFullCodegen(preset: string, config: unknown): Promise<S
 	if (verbose) console.log(`[sdl-codegen]: Full run took ${timeTaken}ms`)
 
 	const createWatcher = () => {
+		const oldSDL = ""
+
 		return {
 			fileChanged: async (path: string) => {
+				if (isTypesFile(path)) return
 				if (path === appContext.pathSettings.graphQLSchemaPath) {
+					const newSDL = appContext.sys.readFile(path)
+					if (newSDL === oldSDL) return
+
 					if (verbose) console.log("[sdl-codegen] SDL Schema changed")
-					getGraphQLSDLFromFile(appContext.pathSettings)
-					await createSharedSchemaFiles(appContext)
-					await createDTSFilesForAllServices()
+					await step("GraphQL schema changed", () => getGraphQLSDLFromFile(appContext.pathSettings))
+					await step("Create all shared schema files", () => createSharedSchemaFiles(appContext))
+					await step("Create all service files", createDTSFilesForAllServices)
 				} else if (path === appContext.pathSettings.prismaDSLPath) {
-					if (verbose) console.log("[sdl-codegen] Prisma schema changed")
-					getPrismaSchemaFromFile(appContext.pathSettings)
-					await createDTSFilesForAllServices()
+					await step("Prisma schema changed", () => getPrismaSchemaFromFile(appContext.pathSettings))
+					await step("Create all shared schema files", createDTSFilesForAllServices)
 				} else if (isRedwoodServiceFile(path)) {
 					if (!knownServiceFiles.includes(path)) {
-						if (verbose) console.log("[sdl-codegen] New service file")
-						await createDTSFilesForAllServices()
+						await step("Create all shared schema files", createDTSFilesForAllServices)
 					} else {
-						if (verbose) console.log("[sdl-codegen] Service file changed")
-						await lookAtServiceFile(path, appContext)
+						await step("Create known service files", () => lookAtServiceFile(path, appContext))
 					}
 				}
 			},
@@ -137,15 +140,20 @@ export async function runFullCodegen(preset: string, config: unknown): Promise<S
 	}
 }
 
+const isTypesFile = (file: string) => file.endsWith(".d.ts")
+
 const isRedwoodServiceFile = (file: string) => {
+	if (!file.includes("services")) return false
+	if (file.endsWith(".d.ts")) return false
 	if (file.endsWith(".test.ts") || file.endsWith(".test.js")) return false
 	if (file.endsWith("scenarios.ts") || file.endsWith("scenarios.js")) return false
 	return file.endsWith(".ts") || file.endsWith(".tsx") || file.endsWith(".js")
 }
 
-const makeStep = (verbose: boolean) => async (msg: string, fn: () => Promise<void> | void) => {
+const makeStep = (verbose: boolean) => async (msg: string, fn: () => Promise<unknown> | Promise<void> | void) => {
 	if (!verbose) return fn()
-	console.time(msg)
+	console.log("[sdl-codegen] " + msg)
+	console.time("[sdl-codegen] " + msg)
 	await fn()
-	console.timeEnd(msg)
+	console.timeEnd("[sdl-codegen] " + msg)
 }
