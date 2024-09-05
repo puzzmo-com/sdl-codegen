@@ -17,7 +17,7 @@ interface Run {
 	sdl?: string
 }
 
-export function getDTSFilesForRun(run: Run) {
+export async function getDTSFilesForRun(run: Run) {
 	const prisma = getPrismaSchema(run.prismaSchema ?? "")
 	let gqlSDL = run.sdl ?? ""
 	if (!gqlSDL.includes("type Query")) gqlSDL += "type Query { _: String }\n"
@@ -52,11 +52,11 @@ export function getDTSFilesForRun(run: Run) {
 
 	if (run.gamesService) {
 		vfsMap.set("/api/src/services/games.ts", run.gamesService)
-		lookAtServiceFile("/api/src/services/games.ts", appContext)
+		await lookAtServiceFile("/api/src/services/games.ts", appContext)
 	}
 
 	if (run.generateShared) {
-		createSharedSchemaFiles(appContext)
+		await createSharedSchemaFiles(appContext)
 	}
 
 	return {

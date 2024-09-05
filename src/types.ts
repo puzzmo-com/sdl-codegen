@@ -41,5 +41,5 @@ export interface RedwoodPaths {
 		// }
 	}
 	scripts: string
-	web: any
+	web: object
 }

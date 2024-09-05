@@ -10,27 +10,27 @@ import { createSharedSchemaFiles } from "./sharedSchema.js"
 import { CodeFacts, FieldFacts } from "./typeFacts.js"
 import { RedwoodPaths } from "./types.js"
 
-export * from "./main.js"
 export * from "./types.js"
 
 import { basename, join } from "node:path"
 
-interface SDLCodeGenReturn {
+export interface SDLCodeGenReturn {
 	// Optional way to start up a watcher mode for the codegen
-	createWatcher: () => { fileChanged: (path: string) => void }
+	createWatcher: () => { fileChanged: (path: string) => Promise<void> }
 	// Paths which were added/changed during the run
 	paths: string[]
 }
 
 /** The API specifically for the Redwood preset */
-export function runFullCodegen(preset: "redwood", config: { paths: RedwoodPaths; verbose?: true }): SDLCodeGenReturn
+export async function runFullCodegen(preset: "redwood", config: { paths: RedwoodPaths; verbose?: true }): Promise<SDLCodeGenReturn>
 
-export function runFullCodegen(preset: string, config: unknown): SDLCodeGenReturn
+export async function runFullCodegen(preset: string, config: unknown): Promise<SDLCodeGenReturn>
 
-export function runFullCodegen(preset: string, config: unknown): SDLCodeGenReturn {
+export async function runFullCodegen(preset: string, config: unknown): Promise<SDLCodeGenReturn> {
 	if (preset !== "redwood") throw new Error("Only Redwood codegen is supported at this time")
-	const verbose = (config as { verbose?: true }).verbose
+	const verbose = !!(config as { verbose?: true }).verbose
 	const startTime = Date.now()
+	const step = makeStep(verbose)
 
 	const paths = (config as { paths: RedwoodPaths }).paths
 	const sys = typescript.sys
@@ -62,8 +62,8 @@ export function runFullCodegen(preset: string, config: unknown): SDLCodeGenRetur
 		prismaSchema = prismaModeller(prismaSchemaBlocks)
 	}
 
-	getGraphQLSDLFromFile(pathSettings)
-	getPrismaSchemaFromFile(pathSettings)
+	await step("Read the GraphQL schema", () => getGraphQLSDLFromFile(pathSettings))
+	await step("Read the Prisma schema", () => getPrismaSchemaFromFile(pathSettings))
 
 	if (!gqlSchema) throw new Error("No GraphQL Schema was created during setup")
 
@@ -83,46 +83,51 @@ export function runFullCodegen(preset: string, config: unknown): SDLCodeGenRetur
 	const filepaths = [] as string[]
 
 	// Create the two shared schema files
-	const sharedDTSes = createSharedSchemaFiles(appContext)
-	filepaths.push(...sharedDTSes)
+	await step("Create shared schema files", async () => {
+		const sharedDTSes = await createSharedSchemaFiles(appContext)
+		filepaths.push(...sharedDTSes)
+	})
 
 	let knownServiceFiles: string[] = []
-	const createDTSFilesForAllServices = () => {
+	const createDTSFilesForAllServices = async () => {
 		// TODO: Maybe Redwood has an API for this? Its grabbing all the services
 		const serviceFiles = appContext.sys.readDirectory(appContext.pathSettings.apiServicesPath)
 		knownServiceFiles = serviceFiles.filter(isRedwoodServiceFile)
 		for (const path of knownServiceFiles) {
-			const dts = lookAtServiceFile(path, appContext)
+			const dts = await lookAtServiceFile(path, appContext)
 			if (dts) filepaths.push(dts)
 		}
 	}
 
 	// Initial run
-	createDTSFilesForAllServices()
+	await step("Create DTS files for all services", createDTSFilesForAllServices)
+
 	const endTime = Date.now()
 	const timeTaken = endTime - startTime
-
 	if (verbose) console.log(`[sdl-codegen]: Full run took ${timeTaken}ms`)
 
 	const createWatcher = () => {
+		const oldSDL = ""
+
 		return {
-			fileChanged: (path: string) => {
+			fileChanged: async (path: string) => {
+				if (isTypesFile(path)) return
 				if (path === appContext.pathSettings.graphQLSchemaPath) {
+					const newSDL = appContext.sys.readFile(path)
+					if (newSDL === oldSDL) return
+
 					if (verbose) console.log("[sdl-codegen] SDL Schema changed")
-					getGraphQLSDLFromFile(appContext.pathSettings)
-					createSharedSchemaFiles(appContext)
-					createDTSFilesForAllServices()
+					await step("GraphQL schema changed", () => getGraphQLSDLFromFile(appContext.pathSettings))
+					await step("Create all shared schema files", () => createSharedSchemaFiles(appContext))
+					await step("Create all service files", createDTSFilesForAllServices)
 				} else if (path === appContext.pathSettings.prismaDSLPath) {
-					if (verbose) console.log("[sdl-codegen] Prisma schema changed")
-					getPrismaSchemaFromFile(appContext.pathSettings)
-					createDTSFilesForAllServices()
+					await step("Prisma schema changed", () => getPrismaSchemaFromFile(appContext.pathSettings))
+					await step("Create all shared schema files", createDTSFilesForAllServices)
 				} else if (isRedwoodServiceFile(path)) {
-					if (knownServiceFiles.includes(path)) {
-						if (verbose) console.log("[sdl-codegen] New service file")
-						createDTSFilesForAllServices()
+					if (!knownServiceFiles.includes(path)) {
+						await step("Create all shared schema files", createDTSFilesForAllServices)
 					} else {
-						if (verbose) console.log("[sdl-codegen] Service file changed")
-						lookAtServiceFile(path, appContext)
+						await step("Create known service files", () => lookAtServiceFile(path, appContext))
 					}
 				}
 			},
@@ -135,8 +140,20 @@ export function runFullCodegen(preset: string, config: unknown): SDLCodeGenRetur
 	}
 }
 
+const isTypesFile = (file: string) => file.endsWith(".d.ts")
+
 const isRedwoodServiceFile = (file: string) => {
+	if (!file.includes("services")) return false
+	if (file.endsWith(".d.ts")) return false
 	if (file.endsWith(".test.ts") || file.endsWith(".test.js")) return false
 	if (file.endsWith("scenarios.ts") || file.endsWith("scenarios.js")) return false
 	return file.endsWith(".ts") || file.endsWith(".tsx") || file.endsWith(".js")
+}
+
+const makeStep = (verbose: boolean) => async (msg: string, fn: () => Promise<unknown> | Promise<void> | void) => {
+	if (!verbose) return fn()
+	console.log("[sdl-codegen] " + msg)
+	console.time("[sdl-codegen] " + msg)
+	await fn()
+	console.timeEnd("[sdl-codegen] " + msg)
 }

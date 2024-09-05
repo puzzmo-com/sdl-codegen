@@ -2,7 +2,7 @@ import { expect, it } from "vitest"
 
 import { getDTSFilesForRun, graphql, prisma } from "../testRunner.js"
 
-it("uses a rn to promise when we see an async tag", () => {
+it("uses a rn to promise when we see an async tag", async () => {
 	const prismaSchema = prisma`
 model Game {
     id            Int          @id @default(autoincrement())
@@ -51,7 +51,7 @@ export const Game = {
 };
 `
 
-	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService, prismaSchema })
+	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService, prismaSchema })
 	const dts = vfsMap.get("/types/games.d.ts")!
 	expect(dts.trim()).toMatchInlineSnapshot(`
 		"import type { Game as PGame } from \\"@prisma/client\\";

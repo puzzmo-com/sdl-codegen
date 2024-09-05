@@ -2,7 +2,7 @@ import { expect, it } from "vitest"
 
 import { getDTSFilesForRun, graphql, prisma } from "../testRunner.js"
 
-it("It allows you to add a generic parameter", () => {
+it("It allows you to add a generic parameter", async () => {
 	const prismaSchema = prisma`
 model Game {
     id            Int          @id @default(autoincrement())
@@ -25,7 +25,7 @@ import { db } from "src/lib/db";
 export const Game: GameResolvers<{ type: string }> = {};
 `
 
-	const { vfsMap } = getDTSFilesForRun({ sdl, gamesService: services, prismaSchema })
+	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService: services, prismaSchema })
 
 	expect(vfsMap.get("/types/games.d.ts")!).toContain("interface GameTypeResolvers<Extended>")
 

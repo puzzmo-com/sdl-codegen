@@ -39,7 +39,7 @@ export const prismaModeller = (schema: PrismaSchemaBlocks) => {
 					leadingFieldComments.push(p.text.replace("/// ", "").replace("// ", ""))
 				} else if (p.type === "break") {
 					leadingFieldComments.push("")
-				} else if (p.type === "attribute" || p.type === "field") {
+				} else {
 					properties.set(p.name, {
 						leadingComments: leadingFieldComments.join("\n"),
 						property: p,

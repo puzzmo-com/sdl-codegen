@@ -4,12 +4,12 @@ import * as graphql from "graphql"
 import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
-import { formatDTS, getPrettierConfig } from "./formatDTS.js"
+import { formatDTS } from "./formatDTS.js"
 import { typeMapper } from "./typeMap.js"
 
-export const createSharedSchemaFiles = (context: AppContext) => {
-	createSharedExternalSchemaFile(context)
-	createSharedReturnPositionSchemaFile(context)
+export const createSharedSchemaFiles = async (context: AppContext) => {
+	await createSharedExternalSchemaFile(context)
+	await createSharedReturnPositionSchemaFile(context)
 
 	return [
 		context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename),
@@ -17,7 +17,7 @@ export const createSharedSchemaFiles = (context: AppContext) => {
 	]
 }
 
-function createSharedExternalSchemaFile(context: AppContext) {
+async function createSharedExternalSchemaFile(context: AppContext) {
 	const gql = context.gql
 	const types = gql.getTypeMap()
 	const knownPrimitives = ["String", "Boolean", "Int"]
@@ -123,14 +123,13 @@ function createSharedExternalSchemaFile(context: AppContext) {
 	}
 
 	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename)
-	const config = getPrettierConfig(fullPath)
-	const formatted = formatDTS(fullPath, externalTSFile.getText(), config)
+	const formatted = await formatDTS(fullPath, externalTSFile.getText())
 
 	const prior = context.sys.readFile(fullPath)
 	if (prior !== formatted) context.sys.writeFile(fullPath, formatted)
 }
 
-function createSharedReturnPositionSchemaFile(context: AppContext) {
+async function createSharedReturnPositionSchemaFile(context: AppContext) {
 	const { gql, prisma, fieldFacts } = context
 	const types = gql.getTypeMap()
 	const mapper = typeMapper(context, { preferPrismaModels: true })
@@ -254,8 +253,7 @@ function createSharedReturnPositionSchemaFile(context: AppContext) {
 	}
 
 	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedInternalFilename)
-	const config = getPrettierConfig(fullPath)
-	const formatted = formatDTS(fullPath, externalTSFile.getText(), config)
+	const formatted = await formatDTS(fullPath, externalTSFile.getText())
 
 	const prior = context.sys.readFile(fullPath)
 	if (prior !== formatted) context.sys.writeFile(fullPath, formatted)
