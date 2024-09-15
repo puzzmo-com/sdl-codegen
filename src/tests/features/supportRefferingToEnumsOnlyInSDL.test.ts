@@ -76,12 +76,12 @@ export const Game: GameResolvers = {};
 		  allGames: Game[];
 		}
 
-		export type GameType = \\"FOOTBALL\\" | \\"BASKETBALL\\";
-
 		export interface Mutation {
 		  __typename?: \\"Mutation\\";
 		  __?: string | null;
 		}
+
+		export type GameType = \\"FOOTBALL\\" | \\"BASKETBALL\\";
 		"
 	`)
 })

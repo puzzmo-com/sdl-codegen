@@ -39,7 +39,6 @@ desc("Puzzmo", () => {
 			scripts: "-",
 		}
 
-		const results = await runFullCodegen("redwood", { paths, verbose: true, sys: vfs })
-		console.log(results)
+		await runFullCodegen("redwood", { paths, verbose: true, sys: vfs })
 	})
 })

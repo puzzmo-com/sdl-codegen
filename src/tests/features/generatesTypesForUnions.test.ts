@@ -48,8 +48,6 @@ export const Game = {
 		  id: number;
 		}
 
-		export type Gameish = Game | Puzzle;
-
 		export interface Query {
 		  __typename?: \\"Query\\";
 		  gameObj?: Game | null | Puzzle | null | null;
@@ -59,6 +57,8 @@ export const Game = {
 		export interface Mutation {
 		  __typename?: \\"Mutation\\";
 		  __?: string | null;
-		}"
+		}
+
+		export type Gameish = Game | Puzzle;"
 	`)
 })
