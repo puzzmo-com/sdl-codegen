@@ -56,3 +56,11 @@ export const createAndReferOrInlineArgsForField = (
 
 	return `${config.name}Args`
 }
+
+export const makeStep = (verbose: boolean) => async (msg: string, fn: () => Promise<unknown> | Promise<void> | void) => {
+	if (!verbose) return fn()
+	console.log("[sdl-codegen] " + msg)
+	console.time("[sdl-codegen] " + msg)
+	await fn()
+	console.timeEnd("[sdl-codegen] " + msg)
+}

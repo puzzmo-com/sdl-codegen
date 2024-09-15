@@ -5,11 +5,16 @@ import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
 import { formatDTS } from "./formatDTS.js"
+import { createSharedExternalSchemaFileViaTSC } from "./sharedSchemaTSC.js"
 import { typeMapper } from "./typeMap.js"
+import { makeStep } from "./utils.js"
 
-export const createSharedSchemaFiles = async (context: AppContext) => {
-	await createSharedExternalSchemaFile(context)
-	await createSharedReturnPositionSchemaFile(context)
+export const createSharedSchemaFiles = async (context: AppContext, verbose: boolean) => {
+	const step = makeStep(verbose)
+
+	await step("Creating shared schema files", () => createSharedExternalSchemaFile(context))
+	await step("Creating shared schema files via tsc", () => createSharedExternalSchemaFileViaTSC(context))
+	await step("Creating shared return position schema files", () => createSharedReturnPositionSchemaFile(context))
 
 	return [
 		context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename),
@@ -26,6 +31,9 @@ async function createSharedExternalSchemaFile(context: AppContext) {
 	const mapper = typeMapper(context, {})
 
 	const externalTSFile = context.tsProject.createSourceFile(`/source/${context.pathSettings.sharedFilename}`, "")
+
+	const interfaces = [] as tsMorph.InterfaceDeclarationStructure[]
+	const typeAliases = [] as tsMorph.TypeAliasDeclarationStructure[]
 
 	Object.keys(types).forEach((name) => {
 		if (name.startsWith("__")) {
@@ -50,7 +58,8 @@ async function createSharedExternalSchemaFile(context: AppContext) {
 				docs.push(type.description)
 			}
 
-			externalTSFile.addInterface({
+			interfaces.push({
+				kind: tsMorph.StructureKind.Interface,
 				name: type.name,
 				isExported: true,
 				docs: [],
@@ -87,9 +96,10 @@ async function createSharedExternalSchemaFile(context: AppContext) {
 		}
 
 		if (graphql.isEnumType(type)) {
-			externalTSFile.addTypeAlias({
+			typeAliases.push({
 				name: type.name,
 				isExported: true,
+				kind: tsMorph.StructureKind.TypeAlias,
 				type:
 					'"' +
 					type
@@ -101,9 +111,10 @@ async function createSharedExternalSchemaFile(context: AppContext) {
 		}
 
 		if (graphql.isUnionType(type)) {
-			externalTSFile.addTypeAlias({
+			typeAliases.push({
 				name: type.name,
 				isExported: true,
+				kind: tsMorph.StructureKind.TypeAlias,
 				type: type
 					.getTypes()
 					.map((m) => m.name)
@@ -112,15 +123,16 @@ async function createSharedExternalSchemaFile(context: AppContext) {
 		}
 	})
 
+	context.tsProject.forgetNodesCreatedInBlock(() => {
+		externalTSFile.addInterfaces(interfaces)
+	})
+
+	context.tsProject.forgetNodesCreatedInBlock(() => {
+		externalTSFile.addTypeAliases(typeAliases)
+	})
+
 	const { scalars } = mapper.getReferencedGraphQLThingsInMapping()
-	if (scalars.length) {
-		externalTSFile.addTypeAliases(
-			scalars.map((s) => ({
-				name: s,
-				type: "any",
-			}))
-		)
-	}
+	if (scalars.length) externalTSFile.addTypeAliases(scalars.map((s) => ({ name: s, type: "any" })))
 
 	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename)
 	const formatted = await formatDTS(fullPath, externalTSFile.getText())
@@ -153,6 +165,9 @@ async function createSharedReturnPositionSchemaFile(context: AppContext) {
 `
 	)
 
+	const interfaces = [] as tsMorph.InterfaceDeclarationStructure[]
+	const typeAliases = [] as tsMorph.TypeAliasDeclarationStructure[]
+
 	Object.keys(types).forEach((name) => {
 		if (name.startsWith("__")) {
 			return
@@ -173,8 +188,9 @@ async function createSharedReturnPositionSchemaFile(context: AppContext) {
 				return
 			}
 
-			externalTSFile.addInterface({
+			interfaces.push({
 				name: type.name,
+				kind: tsMorph.StructureKind.Interface,
 				isExported: true,
 				docs: [],
 				properties: [
@@ -200,9 +216,10 @@ async function createSharedReturnPositionSchemaFile(context: AppContext) {
 		}
 
 		if (graphql.isEnumType(type)) {
-			externalTSFile.addTypeAlias({
+			typeAliases.push({
 				name: type.name,
 				isExported: true,
+				kind: tsMorph.StructureKind.TypeAlias,
 				type:
 					'"' +
 					type
@@ -214,8 +231,9 @@ async function createSharedReturnPositionSchemaFile(context: AppContext) {
 		}
 
 		if (graphql.isUnionType(type)) {
-			externalTSFile.addTypeAlias({
+			typeAliases.push({
 				name: type.name,
+				kind: tsMorph.StructureKind.TypeAlias,
 				isExported: true,
 				type: type
 					.getTypes()
@@ -243,14 +261,17 @@ async function createSharedReturnPositionSchemaFile(context: AppContext) {
 			namedImports: allPrismaModels.map((p) => `${p} as P${p}`),
 		})
 
-		allPrismaModels.forEach((p) => {
-			externalTSFile.addTypeAlias({
+		externalTSFile.addTypeAliases(
+			allPrismaModels.map((p) => ({
 				isExported: true,
 				name: p,
 				type: `P${p}`,
-			})
-		})
+			}))
+		)
 	}
+
+	externalTSFile.addInterfaces(interfaces)
+	externalTSFile.addTypeAliases(typeAliases)
 
 	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedInternalFilename)
 	const formatted = await formatDTS(fullPath, externalTSFile.getText())
