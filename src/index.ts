@@ -14,6 +14,8 @@ export * from "./types.js"
 
 import { basename, join } from "node:path"
 
+import { makeStep } from "./utils.js"
+
 export interface SDLCodeGenReturn {
 	// Optional way to start up a watcher mode for the codegen
 	createWatcher: () => { fileChanged: (path: string) => Promise<void> }
@@ -22,7 +24,10 @@ export interface SDLCodeGenReturn {
 }
 
 /** The API specifically for the Redwood preset */
-export async function runFullCodegen(preset: "redwood", config: { paths: RedwoodPaths; verbose?: true }): Promise<SDLCodeGenReturn>
+export async function runFullCodegen(
+	preset: "redwood",
+	config: { paths: RedwoodPaths; sys?: typescript.System; verbose?: true }
+): Promise<SDLCodeGenReturn>
 
 export async function runFullCodegen(preset: string, config: unknown): Promise<SDLCodeGenReturn>
 
@@ -148,12 +153,4 @@ const isRedwoodServiceFile = (file: string) => {
 	if (file.endsWith(".test.ts") || file.endsWith(".test.js")) return false
 	if (file.endsWith("scenarios.ts") || file.endsWith("scenarios.js")) return false
 	return file.endsWith(".ts") || file.endsWith(".tsx") || file.endsWith(".js")
-}
-
-const makeStep = (verbose: boolean) => async (msg: string, fn: () => Promise<unknown> | Promise<void> | void) => {
-	if (!verbose) return fn()
-	console.log("[sdl-codegen] " + msg)
-	console.time("[sdl-codegen] " + msg)
-	await fn()
-	console.timeEnd("[sdl-codegen] " + msg)
 }

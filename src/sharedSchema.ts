@@ -6,10 +6,14 @@ import * as tsMorph from "ts-morph"
 import { AppContext } from "./context.js"
 import { formatDTS } from "./formatDTS.js"
 import { typeMapper } from "./typeMap.js"
+import { makeStep } from "./utils.js"
 
 export const createSharedSchemaFiles = async (context: AppContext) => {
-	await createSharedExternalSchemaFile(context)
-	await createSharedReturnPositionSchemaFile(context)
+	const verbose = !!(context as { verbose?: true }).verbose
+	const step = makeStep(verbose)
+
+	await step("Creating shared schema files", () => createSharedExternalSchemaFile(context))
+	await step("Creating shared return position schema files", () => createSharedReturnPositionSchemaFile(context))
 
 	return [
 		context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename),
