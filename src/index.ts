@@ -89,15 +89,15 @@ export async function runFullCodegen(preset: string, config: unknown): Promise<S
 
 	// Create the two shared schema files
 	await step("Create shared schema files", async () => {
-		const sharedDTSes = await createSharedSchemaFiles(appContext)
+		const sharedDTSes = await createSharedSchemaFiles(appContext, verbose)
 		filepaths.push(...sharedDTSes)
 	})
 
 	let knownServiceFiles: string[] = []
 	const createDTSFilesForAllServices = async () => {
-		// TODO: Maybe Redwood has an API for this? Its grabbing all the services
 		const serviceFiles = appContext.sys.readDirectory(appContext.pathSettings.apiServicesPath)
 		knownServiceFiles = serviceFiles.filter(isRedwoodServiceFile)
+
 		for (const path of knownServiceFiles) {
 			const dts = await lookAtServiceFile(path, appContext)
 			if (dts) filepaths.push(dts)
@@ -123,7 +123,7 @@ export async function runFullCodegen(preset: string, config: unknown): Promise<S
 
 					if (verbose) console.log("[sdl-codegen] SDL Schema changed")
 					await step("GraphQL schema changed", () => getGraphQLSDLFromFile(appContext.pathSettings))
-					await step("Create all shared schema files", () => createSharedSchemaFiles(appContext))
+					await step("Create all shared schema files", () => createSharedSchemaFiles(appContext, verbose))
 					await step("Create all service files", createDTSFilesForAllServices)
 				} else if (path === appContext.pathSettings.prismaDSLPath) {
 					await step("Prisma schema changed", () => getPrismaSchemaFromFile(appContext.pathSettings))

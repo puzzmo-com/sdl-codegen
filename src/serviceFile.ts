@@ -28,7 +28,6 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const mutationType = gql.getMutationType()!
-
 	if (!mutationType) throw new Error("No mutation type")
 
 	const externalMapper = typeMapper(context, { preferPrismaModels: true })
@@ -201,6 +200,8 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 			],
 			returnType,
 		})
+
+		interfaceDeclaration.forget()
 	}
 
 	/** Ideally, we want to be able to write the type for just the object  */

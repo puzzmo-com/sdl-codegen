@@ -39,26 +39,22 @@ export const Game = {
 	const dts = vfsMap.get("/types/shared-schema-types.d.ts")!
 	expect(dts.trim()).toMatchInlineSnapshot(`
 		"export interface Game {
-		  __typename?: \\"Game\\";
-		  id?: number;
+		    __typename?: \\"Game\\";
+		    id?: number;
 		}
-
 		export interface Puzzle {
-		  __typename?: \\"Puzzle\\";
-		  id: number;
+		    __typename?: \\"Puzzle\\";
+		    id: number;
 		}
-
+		export type Gameish = Game | Puzzle;
 		export interface Query {
-		  __typename?: \\"Query\\";
-		  gameObj?: Game | null | Puzzle | null | null;
-		  gameArr: (Game | Puzzle)[];
+		    __typename?: \\"Query\\";
+		    gameObj?: Game| null | Puzzle| null| null;
+		    gameArr: (Game | Puzzle)[];
 		}
-
 		export interface Mutation {
-		  __typename?: \\"Mutation\\";
-		  __?: string | null;
-		}
-
-		export type Gameish = Game | Puzzle;"
+		    __typename?: \\"Mutation\\";
+		    __?: string| null;
+		}"
 	`)
 })

@@ -66,22 +66,19 @@ export const Game: GameResolvers = {};
 
 	expect(vfsMap.get("/types/shared-schema-types.d.ts"))!.toMatchInlineSnapshot(`
 		"export interface Game {
-		  __typename?: \\"Game\\";
-		  id: number;
-		  games: Game[];
+		    __typename?: \\"Game\\";
+		    id: number;
+		    games: Game[];
 		}
-
 		export interface Query {
-		  __typename?: \\"Query\\";
-		  allGames: Game[];
+		    __typename?: \\"Query\\";
+		    allGames: Game[];
 		}
-
+		type GameType = \\"FOOTBALL\\" | \\"BASKETBALL\\";
 		export interface Mutation {
-		  __typename?: \\"Mutation\\";
-		  __?: string | null;
+		    __typename?: \\"Mutation\\";
+		    __?: string| null;
 		}
-
-		export type GameType = \\"FOOTBALL\\" | \\"BASKETBALL\\";
 		"
 	`)
 })

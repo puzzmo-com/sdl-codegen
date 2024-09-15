@@ -5,14 +5,15 @@ import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
 import { formatDTS } from "./formatDTS.js"
+import { createSharedExternalSchemaFileViaTSC } from "./sharedSchemaTSC.js"
 import { typeMapper } from "./typeMap.js"
 import { makeStep } from "./utils.js"
 
-export const createSharedSchemaFiles = async (context: AppContext) => {
-	const verbose = !!(context as { verbose?: true }).verbose
+export const createSharedSchemaFiles = async (context: AppContext, verbose: boolean) => {
 	const step = makeStep(verbose)
 
 	await step("Creating shared schema files", () => createSharedExternalSchemaFile(context))
+	await step("Creating shared schema files via tsc", () => createSharedExternalSchemaFileViaTSC(context))
 	await step("Creating shared return position schema files", () => createSharedReturnPositionSchemaFile(context))
 
 	return [
@@ -122,8 +123,13 @@ async function createSharedExternalSchemaFile(context: AppContext) {
 		}
 	})
 
-	externalTSFile.addInterfaces(interfaces)
-	externalTSFile.addTypeAliases(typeAliases)
+	context.tsProject.forgetNodesCreatedInBlock(() => {
+		externalTSFile.addInterfaces(interfaces)
+	})
+
+	context.tsProject.forgetNodesCreatedInBlock(() => {
+		externalTSFile.addTypeAliases(typeAliases)
+	})
 
 	const { scalars } = mapper.getReferencedGraphQLThingsInMapping()
 	if (scalars.length) externalTSFile.addTypeAliases(scalars.map((s) => ({ name: s, type: "any" })))
