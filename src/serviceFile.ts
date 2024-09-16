@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 import * as graphql from "graphql"
+import ts from "typescript"
 
 import { AppContext } from "./context.js"
 import { formatDTS } from "./formatDTS.js"
@@ -42,10 +43,12 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	const extraSharedFileImportReferences = new Set<{ import: string; name?: string }>()
 
 	// The file we'll be creating in-memory throughout this fn
-	const fileDTS = context.tsProject.createSourceFile(`source/${fileKey}.d.ts`, "", { overwrite: true })
+	// const fileDTS = context.tsProject.createSourceFile(`source/${fileKey}.d.ts`, "", { overwrite: true })
 
 	// Basically if a top level resolver reference Query or Mutation
 	const knownSpecialCasesForGraphQL = new Set<string>()
+
+	const statements: ts.Statement[] = []
 
 	// Add the root function declarations
 	const rootResolvers = fileFacts.maybe_query_mutation?.resolvers
@@ -58,7 +61,14 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 				addDefinitionsForTopLevelResolvers(parentName, v)
 			} else {
 				// Add warning about unused resolver
-				fileDTS.addStatements(`\n// ${v.name} does not exist on Query or Mutation`)
+				statements.push(
+					ts.addSyntheticLeadingComment(
+						ts.factory.createEmptyStatement(),
+						ts.SyntaxKind.MultiLineCommentTrivia,
+						` ${v.name} does not exist on Query or Mutation `,
+						true
+					)
+				)
 			}
 		})
 
@@ -77,12 +87,9 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	const sharedInternalGraphQLObjectsReferenced = returnTypeMapper.getReferencedGraphQLThingsInMapping()
 
 	const aliases = [...new Set([...sharedGraphQLObjectsReferenced.scalars, ...sharedInternalGraphQLObjectsReferenced.scalars])]
-	if (aliases.length) {
-		fileDTS.addTypeAliases(
-			aliases.map((s) => ({
-				name: s,
-				type: "any",
-			}))
+	for (const alias of aliases) {
+		statements.push(
+			ts.factory.createTypeAliasDeclaration(undefined, alias, undefined, ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword))
 		)
 	}
 
@@ -94,72 +101,99 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 		]),
 	]
 
+	const addImportToStatements = (importName: string, specifiers: ts.NamedImportBindings) => {
+		statements.splice(
+			0,
+			0,
+			ts.factory.createImportDeclaration(
+				[],
+				ts.factory.createImportClause(true, undefined, specifiers),
+				ts.factory.createStringLiteral(importName)
+			)
+		)
+	}
+
 	const validPrismaObjs = prismases.filter((p) => prisma.has(p))
 	if (validPrismaObjs.length) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: "@prisma/client",
-			namedImports: validPrismaObjs.map((p) => `${p} as P${p}`),
-		})
+		addImportToStatements(
+			"@prisma/client",
+			ts.factory.createNamedImports(
+				validPrismaObjs.map((p) =>
+					ts.factory.createImportSpecifier(true, ts.factory.createIdentifier(`P${p}`), ts.factory.createIdentifier(p))
+				)
+			)
+		)
 	}
 
-	if (fileDTS.getText().includes("GraphQLResolveInfo")) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: "graphql",
-			namedImports: ["GraphQLResolveInfo"],
-		})
-	}
+	// if (fileDTS.getText().includes("GraphQLResolveInfo")) {
+	// 	addImportToStatements(
+	// 		"graphql",
+	// 		ts.factory.createNamedImports([ts.factory.createImportSpecifier(true, undefined, ts.factory.createIdentifier("GraphQLResolveInfo"))])
+	// 	)
+	// }
 
-	if (fileDTS.getText().includes("RedwoodGraphQLContext")) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: "@redwoodjs/graphql-server/dist/types",
-			namedImports: ["RedwoodGraphQLContext"],
-		})
-	}
+	// if (fileDTS.getText().includes("RedwoodGraphQLContext")) {
+	// 	addImportToStatements(
+	// 		"@redwoodjs/graphql-server/dist/types",
+	// 		ts.factory.createNamedImports([
+	// 			ts.factory.createImportSpecifier(true, undefined, ts.factory.createIdentifier("RedwoodGraphQLContext")),
+	// 		])
+	// 	)
+	// }
 
 	if (sharedInternalGraphQLObjectsReferenced.types.length || extraSharedFileImportReferences.size) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: `./${settings.sharedInternalFilename.replace(".d.ts", "")}`,
-			namedImports: [
-				...sharedInternalGraphQLObjectsReferenced.types.map((t) => `${t} as RT${t}`),
-				...[...extraSharedFileImportReferences.values()].map((t) => ("name" in t && t.name ? `${t.import} as ${t.name}` : t.import)),
-			],
-		})
+		const path = `./${settings.sharedInternalFilename.replace(".d.ts", "")}`
+		addImportToStatements(
+			path,
+			ts.factory.createNamedImports([
+				...sharedInternalGraphQLObjectsReferenced.types.map((t) =>
+					ts.factory.createImportSpecifier(true, undefined, ts.factory.createIdentifier(`RT${t}`))
+				),
+				...[...extraSharedFileImportReferences.values()].map((t) => {
+					if ("name" in t && t.name) {
+						return ts.factory.createImportSpecifier(true, undefined, ts.factory.createIdentifier(t.name))
+					} else {
+						return ts.factory.createImportSpecifier(true, undefined, ts.factory.createIdentifier(t.import))
+					}
+				}),
+			])
+		)
 	}
 
 	if (sharedGraphQLObjectsReferencedTypes.length) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: `./${settings.sharedFilename.replace(".d.ts", "")}`,
-			namedImports: sharedGraphQLObjectsReferencedTypes,
-		})
+		addImportToStatements(
+			`./${settings.sharedFilename.replace(".d.ts", "")}`,
+			ts.factory.createNamedImports(
+				sharedGraphQLObjectsReferencedTypes.map((t) => ts.factory.createImportSpecifier(true, undefined, ts.factory.createIdentifier(t)))
+			)
+		)
+
+		// fileDTS.addImportDeclaration({
+		// 	isTypeOnly: true,
+		// 	moduleSpecifier: `./${settings.sharedFilename.replace(".d.ts", "")}`,
+		// 	namedImports: sharedGraphQLObjectsReferencedTypes,
+		// })
 	}
 
 	serviceFacts.set(fileKey, thisFact)
 
 	const dtsFilename = filename.endsWith(".ts") ? filename.replace(".ts", ".d.ts") : filename.replace(".js", ".d.ts")
-	const dtsFilepath = context.join(context.pathSettings.typesFolderRoot, dtsFilename)
+	const fullPath = context.join(context.pathSettings.typesFolderRoot, dtsFilename)
+
+	const sourceFile = ts.factory.createSourceFile(statements, ts.factory.createToken(ts.SyntaxKind.EndOfFileToken), ts.NodeFlags.None)
+	const printer = ts.createPrinter({})
+	const result = printer.printNode(ts.EmitHint.Unspecified, sourceFile, sourceFile)
+
+	const prior = context.sys.readFile(fullPath)
+	if (prior === result) return
+	context.sys.writeFile(fullPath, result)
+	return fullPath
 
 	// Some manual formatting tweaks so we align with Redwood's setup more
-	const dts = fileDTS
-		.getText()
-		.replace(`from "graphql";`, `from "graphql";\n`)
-		.replace(`from "@redwoodjs/graphql-server/dist/types";`, `from "@redwoodjs/graphql-server/dist/types";\n`)
-
-	const shouldWriteDTS = !!dts.trim().length
-	if (!shouldWriteDTS) return
-
-	const formatted = await formatDTS(dtsFilepath, dts)
-
-	// Don't make a file write if the content is the same
-	const priorContent = context.sys.readFile(dtsFilename)
-	if (priorContent === formatted) return
-
-	context.sys.writeFile(dtsFilepath, formatted)
-	return dtsFilepath
+	// const dts = fileDTS
+	// 	.getText()
+	// 	.replace(`from "graphql";`, `from "graphql";\n`)
+	// 	.replace(`from "@redwoodjs/graphql-server/dist/types";`, `from "@redwoodjs/graphql-server/dist/types";\n`)
 
 	function addDefinitionsForTopLevelResolvers(parentName: string, config: ResolverFuncFact) {
 		const { name } = config
@@ -168,16 +202,13 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 			field = mutationType.getFields()[name]
 		}
 
-		const interfaceDeclaration = fileDTS.addInterface({
-			name: `${capitalizeFirstLetter(config.name)}Resolver`,
-			isExported: true,
-			docs: field.astNode
-				? ["SDL: " + graphql.print(field.astNode)]
-				: ["@deprecated: Could not find this field in the schema for Mutation or Query"],
-		})
+		const resolverName = `${capitalizeFirstLetter(config.name)}Resolver`
+		const comment = field.astNode
+			? `SDL: ${graphql.print(field.astNode)}`
+			: `@deprecated: Could not find this field in the schema for Mutation or Query`
 
 		const args = createAndReferOrInlineArgsForField(field, {
-			name: interfaceDeclaration.getName(),
+			name: resolverName,
 			file: fileDTS,
 			mapper: externalMapper.map,
 		})
@@ -189,19 +220,40 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 		const qForInfos = config.infoParamType === "just_root_destructured" ? "?" : ""
 		const returnType = returnTypeForResolver(returnTypeMapper, field, config)
 
-		interfaceDeclaration.addCallSignature({
-			parameters: [
-				{ name: "args", type: argsParam, hasQuestionToken: config.funcArgCount < 1 },
-				{
-					name: "obj",
-					type: `{ root: ${parentName}, context${qForInfos}: RedwoodGraphQLContext, info${qForInfos}: GraphQLResolveInfo }`,
-					hasQuestionToken: config.funcArgCount < 2,
-				},
-			],
-			returnType,
-		})
+		const interfaceDec = ts.factory.createInterfaceDeclaration(
+			[ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+			ts.factory.createIdentifier(`${capitalizeFirstLetter(config.name)}Resolver`),
+			undefined,
+			undefined,
+			[
+				// This is the default args for a resolver
+				ts.factory.createCallSignature(
+					undefined,
+					[
+						ts.factory.createParameterDeclaration(
+							undefined,
+							undefined,
+							"args",
+							undefined,
+							ts.factory.createTypeReferenceNode(argsParam, undefined)
+						),
+						ts.factory.createParameterDeclaration(
+							[],
+							undefined,
+							"obj",
+							config.funcArgCount < 2 ? ts.factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
+							ts.factory.createTypeReferenceNode(
+								`{ root: ${parentName}, context${qForInfos}: RedwoodGraphQLContext, info${qForInfos}: GraphQLResolveInfo }`
+							)
+						),
+					],
 
-		interfaceDeclaration.forget()
+					ts.factory.createTypeReferenceNode(returnType, undefined)
+				),
+			]
+		)
+
+		statements.push(ts.addSyntheticLeadingComment(interfaceDec, ts.SyntaxKind.SingleLineCommentTrivia, comment, true))
 	}
 
 	/** Ideally, we want to be able to write the type for just the object  */
