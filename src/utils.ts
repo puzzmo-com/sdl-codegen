@@ -1,5 +1,6 @@
 import * as graphql from "graphql"
 import * as tsMorph from "ts-morph"
+import ts, { SourceFile, Statement } from "typescript"
 
 import { TypeMapper } from "./typeMap.js"
 
@@ -32,27 +33,30 @@ export const inlineArgsForField = (field: graphql.GraphQLField<unknown, unknown>
 export const createAndReferOrInlineArgsForField = (
 	field: graphql.GraphQLField<unknown, unknown>,
 	config: {
-		file: tsMorph.SourceFile
 		mapper: TypeMapper["map"]
 		name: string
 		noSeparateType?: true
+		statements: Statement[]
 	}
 ) => {
 	const inlineArgs = inlineArgsForField(field, config)
 	if (!inlineArgs) return undefined
 	if (inlineArgs.length < 120) return inlineArgs
 
-	const argsInterface = config.file.addInterface({
-		name: `${config.name}Args`,
-		isExported: true,
-	})
+	const interfaceD = ts.factory.createInterfaceDeclaration(
+		[ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+		ts.factory.createIdentifier(`${config.name}Args`),
+		undefined,
+		undefined,
+		field.args.map((f) => {
+			const type = config.mapper(f.type, {})
+			if (!type) throw new Error(`No type for ${f.name} on ${field.name}!`)
 
-	field.args.forEach((a) => {
-		argsInterface.addProperty({
-			name: a.name,
-			type: config.mapper(a.type, {}),
+			return ts.factory.createPropertySignature(undefined, f.name, undefined, ts.factory.createTypeReferenceNode(type))
 		})
-	})
+	)
+
+	config.statements.push(interfaceD)
 
 	return `${config.name}Args`
 }

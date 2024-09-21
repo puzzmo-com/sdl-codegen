@@ -1,12 +1,7 @@
 /// The main schema for objects and inputs
 
-import * as graphql from "graphql"
-import * as tsMorph from "ts-morph"
-
 import { AppContext } from "./context.js"
-import { formatDTS } from "./formatDTS.js"
 import { createSharedExternalSchemaFileViaTSC, createSharedReturnPositionSchemaFileViaTSC } from "./sharedSchemaTSC.js"
-import { typeMapper } from "./typeMap.js"
 import { makeStep } from "./utils.js"
 
 export const createSharedSchemaFiles = async (context: AppContext, verbose: boolean) => {

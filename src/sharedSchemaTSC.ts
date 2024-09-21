@@ -6,7 +6,7 @@ import ts from "typescript"
 import { AppContext } from "./context.js"
 import { typeMapper } from "./typeMap.js"
 
-export async function createSharedExternalSchemaFileViaTSC(context: AppContext) {
+export function createSharedExternalSchemaFileViaTSC(context: AppContext) {
 	const gql = context.gql
 	const types = gql.getTypeMap()
 	const knownPrimitives = ["String", "Boolean", "Int"]
@@ -142,21 +142,20 @@ export async function createSharedReturnPositionSchemaFileViaTSC(context: AppCon
 
 	const statements = [] as ts.Statement[]
 
-	statements
-		.push
-		// 		ts.factory.createJSDocComment(`
-		// // You may very reasonably ask yourself, 'what is this file?' and why do I need it.
+	// statements.push(
+	// ts.factory.createJSDocComment(`
+	// // // You may very reasonably ask yourself, 'what is this file?' and why do I need it.
 
-		// // Roughly, this file ensures that when a resolver wants to return a type - that
-		// // type will match a prisma model. This is useful because you can trivially extend
-		// // the type in the SDL and not have to worry about type mis-matches because the thing
-		// // you returned does not include those functions.
+	// // // Roughly, this file ensures that when a resolver wants to return a type - that
+	// // // type will match a prisma model. This is useful because you can trivially extend
+	// // // the type in the SDL and not have to worry about type mis-matches because the thing
+	// // // you returned does not include those functions.
 
-		// // This gets particularly valuable when you want to return a union type, an interface,
-		// // or a model where the prisma model is nested pretty deeply (GraphQL connections, for example.)
+	// // // This gets particularly valuable when you want to return a union type, an interface,
+	// // // or a model where the prisma model is nested pretty deeply (GraphQL connections, for example.)
 
-		// `)
-		()
+	// // `)
+	// )
 
 	Object.keys(types).forEach((name) => {
 		if (name.startsWith("__")) {
