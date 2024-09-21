@@ -11,9 +11,6 @@ importers:
       '@mrleebo/prisma-ast':
         specifier: ^0.12.0
         version: 0.12.0
-      '@prettier/sync':
-        specifier: 0.5.2
-        version: 0.5.2(prettier@2.8.3)
       ts-morph:
         specifier: ^22.0.0
         version: 22.0.0
@@ -762,11 +759,6 @@ packages:
   '@pnpm/write-project-manifest@4.1.2':
     resolution: {integrity: sha512-/C0j7SsE9tGoj++f0dwePIV7zNZHcX8TcYL6pXNvZZCq4HsOMCBsIlcU9oMI/AGe+KMDfHFQSayWPO9QUuGE5w==}
     engines: {node: '>=14.6'}
-
-  '@prettier/sync@0.5.2':
-    resolution: {integrity: sha512-Yb569su456XNx5BsH/Vyem7xD6g/y9iLmLUzRKM1a/dhU/D7HqqvkAG72znulXlMXztbV0iiu9O5AL8K98TzZQ==}
-    peerDependencies:
-      prettier: '*'
 
   '@sindresorhus/is@5.3.0':
     resolution: {integrity: sha512-CX6t4SYQ37lzxicAqsBtxA3OseeoVrh9cSJ5PFYam0GksYlupRfy1A+Q4aYD3zvcfECLc0zO2u+ZnR2UYKvCrw==}
@@ -2561,9 +2553,6 @@ packages:
   make-dir@3.1.0:
     resolution: {integrity: sha512-g3FeP20LNwhALb/6Cz6Dd4F2ngze0jz7tbzrD2wAV+o9FeNHe4rL+yK2md0J/fiSf1sa1ADhXqi5+oVwOM/eGw==}
     engines: {node: '>=8'}
-
-  make-synchronized@0.2.9:
-    resolution: {integrity: sha512-4wczOs8SLuEdpEvp3vGo83wh8rjJ78UsIk7DIX5fxdfmfMJGog4bQzxfvOwq7Q3yCHLC4jp1urPHIxRS/A93gA==}
 
   map-age-cleaner@0.1.3:
     resolution: {integrity: sha512-bJzx6nMoP6PDLPBFmg7+xRKeFZvFboMrGlxmNj9ClvX53KrmvM5bXFXEWjbz4cz1AFn+jWJ9z/DJSz7hrs0w3w==}
@@ -4552,11 +4541,6 @@ snapshots:
       json5: 2.2.3
       write-file-atomic: 5.0.0
       write-yaml-file: 4.2.0
-
-  '@prettier/sync@0.5.2(prettier@2.8.3)':
-    dependencies:
-      make-synchronized: 0.2.9
-      prettier: 2.8.3
 
   '@sindresorhus/is@5.3.0': {}
 
@@ -6585,8 +6569,6 @@ snapshots:
   make-dir@3.1.0:
     dependencies:
       semver: 6.3.0
-
-  make-synchronized@0.2.9: {}
 
   map-age-cleaner@0.1.3:
     dependencies:

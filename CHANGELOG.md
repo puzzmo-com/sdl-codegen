@@ -1,4 +1,10 @@
-# Changelog
+## Changelog
+
+### 3.0.0
+
+- Lol, yep, another major. Performance wise, we were not where I wanted us to be. We used to use ts-morph to create the `.d.ts` files but now we're using the TypeScript compiler aPI directly. This converts a ~8s built to under a second, but the slowest part of the process is ended up being the prettier formatting.
+
+  So, I'm bailing on supporting a formatting pass in the code-gen'd files. This is _to some extent_ a breaking change, so I'm calling it a major.
 
 ### 2.0.0
 
