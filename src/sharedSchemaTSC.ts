@@ -7,7 +7,7 @@ import { AppContext } from "./context.js"
 import { formatDTS } from "./formatDTS.js"
 import { typeMapper } from "./typeMap.js"
 
-export async function createSharedExternalSchemaFileViaTSC(context: AppContext) {
+export function createSharedExternalSchemaFileViaTSC(context: AppContext) {
 	const gql = context.gql
 	const types = gql.getTypeMap()
 	const knownPrimitives = ["String", "Boolean", "Int"]

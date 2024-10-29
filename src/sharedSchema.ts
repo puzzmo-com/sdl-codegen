@@ -5,6 +5,7 @@ import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
 import { formatDTS } from "./formatDTS.js"
+import { createSharedExternalSchemaFileViaStructure } from "./sharedSchemaStructures.js"
 import { createSharedExternalSchemaFileViaTSC } from "./sharedSchemaTSC.js"
 import { typeMapper } from "./typeMap.js"
 import { makeStep } from "./utils.js"
@@ -14,6 +15,8 @@ export const createSharedSchemaFiles = async (context: AppContext, verbose: bool
 
 	await step("Creating shared schema files", () => createSharedExternalSchemaFile(context))
 	await step("Creating shared schema files via tsc", () => createSharedExternalSchemaFileViaTSC(context))
+	await step("Creating shared schema files via structure", () => createSharedExternalSchemaFileViaStructure(context))
+
 	await step("Creating shared return position schema files", () => createSharedReturnPositionSchemaFile(context))
 
 	return [
@@ -22,7 +25,7 @@ export const createSharedSchemaFiles = async (context: AppContext, verbose: bool
 	]
 }
 
-async function createSharedExternalSchemaFile(context: AppContext) {
+function createSharedExternalSchemaFile(context: AppContext) {
 	const gql = context.gql
 	const types = gql.getTypeMap()
 	const knownPrimitives = ["String", "Boolean", "Int"]
@@ -135,10 +138,10 @@ async function createSharedExternalSchemaFile(context: AppContext) {
 	if (scalars.length) externalTSFile.addTypeAliases(scalars.map((s) => ({ name: s, type: "any" })))
 
 	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename)
-	const formatted = await formatDTS(fullPath, externalTSFile.getText())
+	const text = externalTSFile.getText()
 
 	const prior = context.sys.readFile(fullPath)
-	if (prior !== formatted) context.sys.writeFile(fullPath, formatted)
+	if (prior !== text) context.sys.writeFile(fullPath, text)
 }
 
 async function createSharedReturnPositionSchemaFile(context: AppContext) {
