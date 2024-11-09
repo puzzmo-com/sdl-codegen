@@ -1,22 +1,19 @@
 /// The main schema for objects and inputs
 
+import { BlockStatement } from "@babel/types"
+import t from "@babel/types"
 import * as graphql from "graphql"
 import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
 import { formatDTS } from "./formatDTS.js"
-import { createSharedExternalSchemaFileViaStructure } from "./sharedSchemaStructures.js"
-import { createSharedExternalSchemaFileViaTSC } from "./sharedSchemaTSC.js"
+import { builder } from "./tsBuilder.js"
 import { typeMapper } from "./typeMap.js"
 import { makeStep } from "./utils.js"
 
 export const createSharedSchemaFiles = async (context: AppContext, verbose: boolean) => {
 	const step = makeStep(verbose)
-
 	await step("Creating shared schema files", () => createSharedExternalSchemaFile(context))
-	await step("Creating shared schema files via tsc", () => createSharedExternalSchemaFileViaTSC(context))
-	await step("Creating shared schema files via structure", () => createSharedExternalSchemaFileViaStructure(context))
-
 	await step("Creating shared return position schema files", () => createSharedReturnPositionSchemaFile(context))
 
 	return [
@@ -26,6 +23,7 @@ export const createSharedSchemaFiles = async (context: AppContext, verbose: bool
 }
 
 function createSharedExternalSchemaFile(context: AppContext) {
+	console.time("createSharedExternalSchemaFile")
 	const gql = context.gql
 	const types = gql.getTypeMap()
 	const knownPrimitives = ["String", "Boolean", "Int"]
@@ -33,11 +31,13 @@ function createSharedExternalSchemaFile(context: AppContext) {
 	const { prisma, fieldFacts } = context
 	const mapper = typeMapper(context, {})
 
-	const externalTSFile = context.tsProject.createSourceFile(`/source/${context.pathSettings.sharedFilename}`, "")
+	const priorFile = ""
+	const dts = builder(priorFile, {})
 
-	const interfaces = [] as tsMorph.InterfaceDeclarationStructure[]
-	const typeAliases = [] as tsMorph.TypeAliasDeclarationStructure[]
+	// const externalTSFile = context.tsProject.createSourceFile(`/source/${context.pathSettings.sharedFilename}`, "")
+	const statements = [] as BlockStatement[]
 
+	console.time("createSharedExternalSchemaFile:types-loop")
 	Object.keys(types).forEach((name) => {
 		if (name.startsWith("__")) {
 			return
@@ -61,7 +61,9 @@ function createSharedExternalSchemaFile(context: AppContext) {
 				docs.push(type.description)
 			}
 
-			interfaces.push({
+			// dts.rootScope.addTypeAlias(type.name, null, true)
+
+			statements.push({
 				kind: tsMorph.StructureKind.Interface,
 				name: type.name,
 				isExported: true,
@@ -86,7 +88,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 						const isOptionalInSDL = !graphql.isNonNullType(type)
 						const doesNotExistInPrisma = false // !prismaField;
 
-						const field: tsMorph.OptionalKind<tsMorph.PropertySignatureStructure> = {
+						const field = {
 							name: fieldName,
 							type: mapper.map(type, { preferNullOverUndefined: true }),
 							docs,
@@ -99,7 +101,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 		}
 
 		if (graphql.isEnumType(type)) {
-			typeAliases.push({
+			statements.push({
 				name: type.name,
 				isExported: true,
 				kind: tsMorph.StructureKind.TypeAlias,
@@ -114,7 +116,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 		}
 
 		if (graphql.isUnionType(type)) {
-			typeAliases.push({
+			statements.push({
 				name: type.name,
 				isExported: true,
 				kind: tsMorph.StructureKind.TypeAlias,
@@ -125,21 +127,27 @@ function createSharedExternalSchemaFile(context: AppContext) {
 			})
 		}
 	})
+	console.timeEnd("createSharedExternalSchemaFile:types-loop")
 
-	context.tsProject.forgetNodesCreatedInBlock(() => {
-		externalTSFile.addInterfaces(interfaces)
-	})
-
-	context.tsProject.forgetNodesCreatedInBlock(() => {
-		externalTSFile.addTypeAliases(typeAliases)
-	})
-
+	console.time("createSharedExternalSchemaFile:scalars")
 	const { scalars } = mapper.getReferencedGraphQLThingsInMapping()
-	if (scalars.length) externalTSFile.addTypeAliases(scalars.map((s) => ({ name: s, type: "any" })))
+	for (const s of scalars) {
+		dts.rootScope.addTypeAlias(s, t.tsAnyKeyword())
+	}
+
+	console.timeEnd("createSharedExternalSchemaFile:scalars")
+
+	console.time("createSharedExternalSchemaFile:write")
+	// externalTSFile.set({ statements })
+
+	console.timeEnd("createSharedExternalSchemaFile:write")
+	console.time("createSharedExternalSchemaFile:read")
+	const text = dts.getResult()
+	console.timeEnd("createSharedExternalSchemaFile:read")
+
+	console.timeEnd("createSharedExternalSchemaFile")
 
 	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedFilename)
-	const text = externalTSFile.getText()
-
 	const prior = context.sys.readFile(fullPath)
 	if (prior !== text) context.sys.writeFile(fullPath, text)
 }
@@ -168,8 +176,7 @@ async function createSharedReturnPositionSchemaFile(context: AppContext) {
 `
 	)
 
-	const interfaces = [] as tsMorph.InterfaceDeclarationStructure[]
-	const typeAliases = [] as tsMorph.TypeAliasDeclarationStructure[]
+	const statements = [] as tsMorph.StatementStructures[]
 
 	Object.keys(types).forEach((name) => {
 		if (name.startsWith("__")) {
@@ -191,7 +198,7 @@ async function createSharedReturnPositionSchemaFile(context: AppContext) {
 				return
 			}
 
-			interfaces.push({
+			statements.push({
 				name: type.name,
 				kind: tsMorph.StructureKind.Interface,
 				isExported: true,
@@ -219,7 +226,7 @@ async function createSharedReturnPositionSchemaFile(context: AppContext) {
 		}
 
 		if (graphql.isEnumType(type)) {
-			typeAliases.push({
+			statements.push({
 				name: type.name,
 				isExported: true,
 				kind: tsMorph.StructureKind.TypeAlias,
@@ -234,7 +241,7 @@ async function createSharedReturnPositionSchemaFile(context: AppContext) {
 		}
 
 		if (graphql.isUnionType(type)) {
-			typeAliases.push({
+			statements.push({
 				name: type.name,
 				kind: tsMorph.StructureKind.TypeAlias,
 				isExported: true,
@@ -247,35 +254,32 @@ async function createSharedReturnPositionSchemaFile(context: AppContext) {
 	})
 
 	const { scalars, prisma: prismaModels } = mapper.getReferencedGraphQLThingsInMapping()
-	if (scalars.length) {
-		externalTSFile.addTypeAliases(
-			scalars.map((s) => ({
-				name: s,
-				type: "any",
-			}))
-		)
+	for (const s of scalars) {
+		statements.push({
+			kind: tsMorph.StructureKind.TypeAlias,
+			name: s,
+			type: "any",
+		})
 	}
 
 	const allPrismaModels = [...new Set([...prismaModels, ...typesToImport])].sort()
 	if (allPrismaModels.length) {
-		externalTSFile.addImportDeclaration({
-			isTypeOnly: true,
+		statements.push({
+			kind: tsMorph.StructureKind.ImportDeclaration,
 			moduleSpecifier: `@prisma/client`,
 			namedImports: allPrismaModels.map((p) => `${p} as P${p}`),
 		})
 
-		externalTSFile.addTypeAliases(
-			allPrismaModels.map((p) => ({
-				isExported: true,
+		for (const p of allPrismaModels) {
+			statements.push({
+				kind: tsMorph.StructureKind.TypeAlias,
 				name: p,
 				type: `P${p}`,
-			}))
-		)
+			})
+		}
 	}
 
-	externalTSFile.addInterfaces(interfaces)
-	externalTSFile.addTypeAliases(typeAliases)
-
+	externalTSFile.set({ statements })
 	const fullPath = context.join(context.pathSettings.typesFolderRoot, context.pathSettings.sharedInternalFilename)
 	const formatted = await formatDTS(fullPath, externalTSFile.getText())
 

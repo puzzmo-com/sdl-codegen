@@ -70,11 +70,14 @@ export const Game: GameResolvers = {};
 		    id: number;
 		    games: Game[];
 		}
+
 		export interface Query {
 		    __typename?: \\"Query\\";
 		    allGames: Game[];
 		}
-		type GameType = \\"FOOTBALL\\" | \\"BASKETBALL\\";
+
+		export type GameType = \\"FOOTBALL\\" | \\"BASKETBALL\\";
+
 		export interface Mutation {
 		    __typename?: \\"Mutation\\";
 		    __?: string| null;
