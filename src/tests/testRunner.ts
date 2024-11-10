@@ -6,7 +6,7 @@ import { Project } from "ts-morph"
 
 import { AppContext } from "../context.js"
 import { prismaModeller } from "../prismaModeller.js"
-import { lookAtServiceFile } from "../serviceFile.js"
+import { lookAtServiceFile } from "../serviceFile2.js"
 import { createSharedSchemaFiles } from "../sharedSchema.js"
 import type { CodeFacts, FieldFacts } from "../typeFacts.js"
 

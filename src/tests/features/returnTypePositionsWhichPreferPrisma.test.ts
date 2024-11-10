@@ -41,40 +41,19 @@ export const Game = {
 
 	expect(dts.trimStart()).toMatchInlineSnapshot(
 		`
-		"import type { Game as PGame } from \\"@prisma/client\\";
-		import type { GraphQLResolveInfo } from \\"graphql\\";
-
-		import type { RedwoodGraphQLContext } from \\"@redwoodjs/graphql-server/dist/types\\";
-
-		import type { Game as RTGame } from \\"./shared-return-types\\";
-		import type { Query } from \\"./shared-schema-types\\";
-
-		/** SDL: game: Game */
-		export interface GameResolver {
-		  (
-		    args?: object,
-		    obj?: {
-		      root: Query;
-		      context: RedwoodGraphQLContext;
-		      info: GraphQLResolveInfo;
-		    }
-		  ): RTGame | null | Promise<RTGame | null> | (() => Promise<RTGame | null>);
+		"interface GameResolver {
+		  (args?: RTGame| null | Promise<RTGame| null> | (() => Promise<RTGame| null>), obj?: RTGame| null | Promise<RTGame| null> | (() => Promise<RTGame| null>)): RTGame| null | Promise<RTGame| null> | (() => Promise<RTGame| null>);
 		}
-
-		export interface GameTypeResolvers {
-		  /** SDL: summary: String! */
-		  summary: (
-		    args: undefined,
-		    obj: {
-		      root: GameAsParent;
-		      context?: RedwoodGraphQLContext;
-		      info?: GraphQLResolveInfo;
-		    }
-		  ) => string;
+		interface GameTypeResolvers {
+		  /*SDL: summary: String!*/
+		  summary: (args: undefined, obj: { root: GameAsParent, context?: RedwoodGraphQLContext, info?: GraphQLResolveInfo }) => string;
 		}
-
-		type GameAsParent = PGame & { summary: () => string };
-		"
+		type GameAsParent = PGame & {summary: () => string} ;
+		import { Game as PGame } from \\"@prisma/client\\";
+		import { GraphQLResolveInfo } from \\"graphql\\";
+		import { RedwoodGraphQLContext } from \\"@redwoodjs/graphql-server/dist/types\\";
+		import { Game as RTGame } from \\"./shared-return-types\\";
+		import { Query } from \\"./shared-schema-types\\";"
 	`
 	)
 })

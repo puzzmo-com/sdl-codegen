@@ -31,28 +31,15 @@ export const Game = {
 	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService, prismaSchema })
 	const dts = vfsMap.get("/types/games.d.ts")!
 	expect(dts.trim()).toMatchInlineSnapshot(`
-		"import type { Game as PGame } from \\"@prisma/client\\";
-		import type { GraphQLResolveInfo } from \\"graphql\\";
-
-		import type { RedwoodGraphQLContext } from \\"@redwoodjs/graphql-server/dist/types\\";
-
-		import type { Node as RTNode } from \\"./shared-return-types\\";
-		import type { Node } from \\"./shared-schema-types\\";
-
-		export interface GameTypeResolvers {
-		  /** SDL: puzzle: Node! */
-		  puzzle: (
-		    args?: undefined,
-		    obj?: {
-		      root: GameAsParent;
-		      context: RedwoodGraphQLContext;
-		      info: GraphQLResolveInfo;
-		    }
-		  ) => RTNode | Promise<RTNode> | (() => Promise<RTNode>);
+		"interface GameTypeResolvers {
+		  /*SDL: puzzle: Node!*/
+		  puzzle: (args?: undefined, obj?: { root: GameAsParent, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }) => RTNode | Promise<RTNode> | (() => Promise<RTNode>);
 		}
-
-		type GameAsParent = PGame & {
-		  puzzle: () => RTNode | Promise<RTNode> | (() => Promise<RTNode>);
-		};"
+		type GameAsParent = PGame & {puzzle: () => RTNode | Promise<RTNode> | (() => Promise<RTNode>)} ;
+		import { Game as PGame } from \\"@prisma/client\\";
+		import { GraphQLResolveInfo } from \\"graphql\\";
+		import { RedwoodGraphQLContext } from \\"@redwoodjs/graphql-server/dist/types\\";
+		import { Node as RTNode } from \\"./shared-return-types\\";
+		import { Node } from \\"./shared-schema-types\\";"
 	`)
 })

@@ -1,6 +1,7 @@
 import * as graphql from "graphql"
 import * as tsMorph from "ts-morph"
 
+import { TSBuilder } from "./tsBuilder.js"
 import { TypeMapper } from "./typeMap.js"
 
 export const varStartsWithUppercase = (v: tsMorph.VariableDeclaration) => v.getName()[0].startsWith(v.getName()[0].toUpperCase())
@@ -32,7 +33,7 @@ export const inlineArgsForField = (field: graphql.GraphQLField<unknown, unknown>
 export const createAndReferOrInlineArgsForField = (
 	field: graphql.GraphQLField<unknown, unknown>,
 	config: {
-		file: tsMorph.SourceFile
+		dts: TSBuilder
 		mapper: TypeMapper["map"]
 		name: string
 		noSeparateType?: true
@@ -42,17 +43,15 @@ export const createAndReferOrInlineArgsForField = (
 	if (!inlineArgs) return undefined
 	if (inlineArgs.length < 120) return inlineArgs
 
-	const argsInterface = config.file.addInterface({
-		name: `${config.name}Args`,
-		isExported: true,
-	})
-
-	field.args.forEach((a) => {
-		argsInterface.addProperty({
+	const dts = config.dts
+	dts.rootScope.addInterface(
+		`${config.name}Args`,
+		field.args.map((a) => ({
 			name: a.name,
-			type: config.mapper(a.type, {}),
-		})
-	})
+			type: config.mapper(a.type, {})!,
+			optional: false,
+		}))
+	)
 
 	return `${config.name}Args`
 }
