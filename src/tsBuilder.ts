@@ -141,17 +141,36 @@ export const builder = (priorSource: string, opts: {}) => {
 			)
 			if (prior) return
 
-			if (exported) {
-				statements.push(t.exportNamedDeclaration(t.tsTypeAliasDeclaration(t.identifier(name), null, type)))
-			} else {
-				statements.push(t.tsTypeAliasDeclaration(t.identifier(name), null, type))
-			}
+			const alias = t.tsTypeAliasDeclaration(t.identifier(name), null, type)
+			statements.push(exported ? t.exportNamedDeclaration(alias) : alias)
+		}
+
+		const addInterface = (name: string, fields: { docs?: string; name: string; optional: boolean; type: string }[], exported?: boolean) => {
+			const prior = statements.find(
+				(s) =>
+					(t.isTSInterfaceDeclaration(s) && s.id.name === name) ||
+					(t.isExportNamedDeclaration(s) && t.isTSInterfaceDeclaration(s.declaration) && s.declaration.id.name === name)
+			)
+
+			if (prior) return
+
+			const body = t.tsInterfaceBody(
+				fields.map((f) => {
+					const prop = t.tsPropertySignature(t.identifier(f.name), t.tsTypeAnnotation(t.tsTypeReference(t.identifier(f.type))))
+					prop.optional = f.optional
+					return prop
+				})
+			)
+
+			const alias = t.tsInterfaceDeclaration(t.identifier(name), null, null, body)
+			statements.push(exported ? t.exportNamedDeclaration(alias) : alias)
 		}
 
 		return {
 			addFunction,
 			addVariableDeclaration,
 			addTypeAlias,
+			addInterface,
 		}
 	}
 

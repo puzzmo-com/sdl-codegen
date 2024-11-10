@@ -63,16 +63,13 @@ function createSharedExternalSchemaFile(context: AppContext) {
 
 			// dts.rootScope.addTypeAlias(type.name, null, true)
 
-			statements.push({
-				kind: tsMorph.StructureKind.Interface,
-				name: type.name,
-				isExported: true,
-				docs: [],
-				properties: [
+			dts.rootScope.addInterface(
+				type.name,
+				[
 					{
 						name: "__typename",
 						type: `"${type.name}"`,
-						hasQuestionToken: true,
+						optional: true,
 					},
 					...Object.entries(type.getFields()).map(([fieldName, obj]: [string, graphql.GraphQLField<object, object>]) => {
 						const docs = []
@@ -90,41 +87,34 @@ function createSharedExternalSchemaFile(context: AppContext) {
 
 						const field = {
 							name: fieldName,
-							type: mapper.map(type, { preferNullOverUndefined: true }),
-							docs,
-							hasQuestionToken: hasResolverImplementation ?? (isOptionalInSDL || doesNotExistInPrisma),
+							type: mapper.map(type, { preferNullOverUndefined: true })!,
+							// docs,
+							optional: hasResolverImplementation ?? (isOptionalInSDL || doesNotExistInPrisma),
 						}
 						return field
 					}),
 				],
-			})
+				true
+			)
 		}
 
 		if (graphql.isEnumType(type)) {
-			statements.push({
-				name: type.name,
-				isExported: true,
-				kind: tsMorph.StructureKind.TypeAlias,
-				type:
-					'"' +
-					type
-						.getValues()
-						.map((m) => (m as { value: string }).value)
-						.join('" | "') +
-					'"',
-			})
+			const union =
+				'"' +
+				type
+					.getValues()
+					.map((m) => (m as { value: string }).value)
+					.join('" | "') +
+				'"'
+			dts.rootScope.addTypeAlias(type.name, t.tsTypeReference(t.identifier(union)), true)
 		}
 
 		if (graphql.isUnionType(type)) {
-			statements.push({
-				name: type.name,
-				isExported: true,
-				kind: tsMorph.StructureKind.TypeAlias,
-				type: type
-					.getTypes()
-					.map((m) => m.name)
-					.join(" | "),
-			})
+			const union = type
+				.getTypes()
+				.map((m) => m.name)
+				.join(" | ")
+			dts.rootScope.addTypeAlias(type.name, t.tsTypeReference(t.identifier(union)), true)
 		}
 	})
 	console.timeEnd("createSharedExternalSchemaFile:types-loop")
