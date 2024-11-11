@@ -30,8 +30,8 @@ export const Puzzle = {
 	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService, prismaSchema })
 	const dts = vfsMap.get("/types/games.d.ts")!
 	expect(dts.trim()).toMatchInlineSnapshot(`
-		"interface PuzzleTypeResolvers {
-		  /*SDL: id: Int!*/
+		"export interface PuzzleTypeResolvers {
+		  /* SDL: id: Int!*/
 		  id: number;
 		}
 		type PuzzleAsParent = SPuzzle & {id: () => number} ;

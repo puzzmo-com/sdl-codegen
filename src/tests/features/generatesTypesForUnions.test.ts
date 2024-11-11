@@ -38,21 +38,21 @@ export const Game = {
 	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService, prismaSchema, generateShared: true })
 	const dts = vfsMap.get("/types/shared-schema-types.d.ts")!
 	expect(dts.trim()).toMatchInlineSnapshot(`
-		"interface Game {
+		"export interface Game {
 		  __typename?: \\"Game\\";
 		  id?: number;
 		}
-		interface Puzzle {
+		export interface Puzzle {
 		  __typename?: \\"Puzzle\\";
 		  id: number;
 		}
-		type Gameish = Game | Puzzle;
-		interface Query {
+		export type Gameish = Game | Puzzle;
+		export interface Query {
 		  __typename?: \\"Query\\";
 		  gameObj?: Game| null | Puzzle| null| null;
 		  gameArr: (Game | Puzzle)[];
 		}
-		interface Mutation {
+		export interface Mutation {
 		  __typename?: \\"Mutation\\";
 		  __?: string| null;
 		}"

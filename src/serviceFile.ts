@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
+import t, { tsTypeAnnotation } from "@babel/types"
 import * as graphql from "graphql"
 
 import { AppContext } from "./context.js"
-import { formatDTS } from "./formatDTS.js"
 import { getCodeFactsForJSTSFileAtPath } from "./serviceFile.codefacts.js"
+import { builder, TSBuilder } from "./tsBuilder.js"
 import { CodeFacts, ModelResolverFacts, ResolverFuncFact } from "./typeFacts.js"
 import { TypeMapper, typeMapper } from "./typeMap.js"
 import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField } from "./utils.js"
@@ -21,6 +22,7 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	const thisFact: CodeFacts = {}
 
 	const filename = context.basename(file)
+	const dts = builder("", {})
 
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const queryType = gql.getQueryType()!
@@ -41,9 +43,6 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	const extraPrismaReferences = new Set<string>()
 	const extraSharedFileImportReferences = new Set<{ import: string; name?: string }>()
 
-	// The file we'll be creating in-memory throughout this fn
-	const fileDTS = context.tsProject.createSourceFile(`source/${fileKey}.d.ts`, "", { overwrite: true })
-
 	// Basically if a top level resolver reference Query or Mutation
 	const knownSpecialCasesForGraphQL = new Set<string>()
 
@@ -55,10 +54,10 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 			const isMutation = v.name in mutationType.getFields()
 			const parentName = isQuery ? queryType.name : isMutation ? mutationType.name : undefined
 			if (parentName) {
-				addDefinitionsForTopLevelResolvers(parentName, v)
+				addDefinitionsForTopLevelResolvers(parentName, v, dts)
 			} else {
 				// Add warning about unused resolver
-				fileDTS.addStatements(`\n// ${v.name} does not exist on Query or Mutation`)
+				dts.rootScope.addInterface(v.name, [], { exported: true, docs: "This resolver does not exist on Query or Mutation" })
 			}
 		})
 
@@ -77,13 +76,9 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	const sharedInternalGraphQLObjectsReferenced = returnTypeMapper.getReferencedGraphQLThingsInMapping()
 
 	const aliases = [...new Set([...sharedGraphQLObjectsReferenced.scalars, ...sharedInternalGraphQLObjectsReferenced.scalars])]
-	if (aliases.length) {
-		fileDTS.addTypeAliases(
-			aliases.map((s) => ({
-				name: s,
-				type: "any",
-			}))
-		)
+
+	for (const alias of aliases) {
+		dts.rootScope.addTypeAlias(alias, "any")
 	}
 
 	const prismases = [
@@ -96,34 +91,22 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 
 	const validPrismaObjs = prismases.filter((p) => prisma.has(p))
 	if (validPrismaObjs.length) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: "@prisma/client",
-			namedImports: validPrismaObjs.map((p) => `${p} as P${p}`),
-		})
+		dts.setImport("@prisma/client", { subImports: validPrismaObjs.map((p) => `${p} as P${p}`) })
 	}
 
-	if (fileDTS.getText().includes("GraphQLResolveInfo")) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: "graphql",
-			namedImports: ["GraphQLResolveInfo"],
-		})
+	const initialResult = dts.getResult()
+	if (initialResult.includes("GraphQLResolveInfo")) {
+		dts.setImport("graphql", { subImports: ["GraphQLResolveInfo"] })
 	}
 
-	if (fileDTS.getText().includes("RedwoodGraphQLContext")) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: "@redwoodjs/graphql-server/dist/types",
-			namedImports: ["RedwoodGraphQLContext"],
-		})
+	if (initialResult.includes("RedwoodGraphQLContext")) {
+		dts.setImport("@redwoodjs/graphql-server/dist/types", { subImports: ["RedwoodGraphQLContext"] })
 	}
 
 	if (sharedInternalGraphQLObjectsReferenced.types.length || extraSharedFileImportReferences.size) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: `./${settings.sharedInternalFilename.replace(".d.ts", "")}`,
-			namedImports: [
+		const source = `./${settings.sharedInternalFilename.replace(".d.ts", "")}`
+		dts.setImport(source, {
+			subImports: [
 				...sharedInternalGraphQLObjectsReferenced.types.map((t) => `${t} as RT${t}`),
 				...[...extraSharedFileImportReferences.values()].map((t) => ("name" in t && t.name ? `${t.import} as ${t.name}` : t.import)),
 			],
@@ -131,11 +114,8 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	}
 
 	if (sharedGraphQLObjectsReferencedTypes.length) {
-		fileDTS.addImportDeclaration({
-			isTypeOnly: true,
-			moduleSpecifier: `./${settings.sharedFilename.replace(".d.ts", "")}`,
-			namedImports: sharedGraphQLObjectsReferencedTypes,
-		})
+		const source = `./${settings.sharedFilename.replace(".d.ts", "")}`
+		dts.setImport(source, { subImports: sharedGraphQLObjectsReferencedTypes })
 	}
 
 	serviceFacts.set(fileKey, thisFact)
@@ -144,15 +124,12 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	const dtsFilepath = context.join(context.pathSettings.typesFolderRoot, dtsFilename)
 
 	// Some manual formatting tweaks so we align with Redwood's setup more
-	const dts = fileDTS
-		.getText()
-		.replace(`from "graphql";`, `from "graphql";\n`)
-		.replace(`from "@redwoodjs/graphql-server/dist/types";`, `from "@redwoodjs/graphql-server/dist/types";\n`)
+	const final = dts.getResult()
 
-	const shouldWriteDTS = !!dts.trim().length
+	const shouldWriteDTS = !!final.trim().length
 	if (!shouldWriteDTS) return
 
-	const formatted = await formatDTS(dtsFilepath, dts)
+	const formatted = final // await formatDTS(dtsFilepath, dts)
 
 	// Don't make a file write if the content is the same
 	const priorContent = context.sys.readFile(dtsFilename)
@@ -161,24 +138,21 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	context.sys.writeFile(dtsFilepath, formatted)
 	return dtsFilepath
 
-	function addDefinitionsForTopLevelResolvers(parentName: string, config: ResolverFuncFact) {
+	function addDefinitionsForTopLevelResolvers(parentName: string, config: ResolverFuncFact, dts: TSBuilder) {
 		const { name } = config
 		let field = queryType.getFields()[name]
 		if (!field) {
 			field = mutationType.getFields()[name]
 		}
 
-		const interfaceDeclaration = fileDTS.addInterface({
-			name: `${capitalizeFirstLetter(config.name)}Resolver`,
-			isExported: true,
-			docs: field.astNode
-				? ["SDL: " + graphql.print(field.astNode)]
-				: ["@deprecated: Could not find this field in the schema for Mutation or Query"],
-		})
+		const nodeDocs = field.astNode
+			? ["SDL: " + graphql.print(field.astNode)]
+			: ["@deprecated: Could not find this field in the schema for Mutation or Query"]
+		const interfaceName = `${capitalizeFirstLetter(config.name)}Resolver`
 
 		const args = createAndReferOrInlineArgsForField(field, {
-			name: interfaceDeclaration.getName(),
-			file: fileDTS,
+			name: interfaceName,
+			dts,
 			mapper: externalMapper.map,
 		})
 
@@ -189,19 +163,28 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 		const qForInfos = config.infoParamType === "just_root_destructured" ? "?" : ""
 		const returnType = returnTypeForResolver(returnTypeMapper, field, config)
 
-		interfaceDeclaration.addCallSignature({
-			parameters: [
-				{ name: "args", type: argsParam, hasQuestionToken: config.funcArgCount < 1 },
+		dts.rootScope.addInterface(
+			interfaceName,
+			[
 				{
-					name: "obj",
-					type: `{ root: ${parentName}, context${qForInfos}: RedwoodGraphQLContext, info${qForInfos}: GraphQLResolveInfo }`,
-					hasQuestionToken: config.funcArgCount < 2,
+					type: "call-signature",
+					optional: config.funcArgCount < 1,
+					returnType,
+					params: [
+						{ name: "args", type: argsParam, optional: config.funcArgCount < 1 },
+						{
+							name: "obj",
+							type: `{ root: ${parentName}, context${qForInfos}: RedwoodGraphQLContext, info${qForInfos}: GraphQLResolveInfo }`,
+							optional: config.funcArgCount < 2,
+						},
+					],
 				},
 			],
-			returnType,
-		})
-
-		interfaceDeclaration.forget()
+			{
+				exported: true,
+				docs: nodeDocs.join(" "),
+			}
+		)
 	}
 
 	/** Ideally, we want to be able to write the type for just the object  */
@@ -214,7 +197,7 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 		const gqlType = gql.getType(modelName)
 		if (!gqlType) {
 			// throw new Error(`Could not find a GraphQL type named ${d.getName()}`);
-			fileDTS.addStatements(`\n// ${modelName} does not exist in the schema`)
+			// fileDTS.addStatements(`\n// ${modelName} does not exist in the schema`)
 			return
 		}
 
@@ -229,11 +212,9 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 
 		const hasGenerics = modelFacts.hasGenericArg
 
-		// This is what they would have to write
-		const resolverInterface = fileDTS.addInterface({
-			name: `${modelName}TypeResolvers`,
-			typeParameters: hasGenerics ? ["Extended"] : [],
-			isExported: true,
+		const resolverInterface = dts.rootScope.addInterface(`${modelName}TypeResolvers`, [], {
+			exported: true,
+			generics: hasGenerics ? [{ name: "Extended" }] : [],
 		})
 
 		// Handle extending classes in the runtime which only exist in SDL
@@ -241,13 +222,19 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 		if (!parentIsPrisma) extraSharedFileImportReferences.add({ name: `S${modelName}`, import: modelName })
 		const suffix = parentIsPrisma ? "P" : "S"
 
-		// The parent type for the resolvers
-		fileDTS.addTypeAlias({
-			name: `${modelName}AsParent`,
-			typeParameters: hasGenerics ? ["Extended"] : [],
-			type: `${suffix}${modelName} ${createParentAdditionallyDefinedFunctions()} ${hasGenerics ? " & Extended" : ""}`,
-		})
+		const parentTypeString = `${suffix}${modelName} ${createParentAdditionallyDefinedFunctions()} ${hasGenerics ? " & Extended" : ""}`
 
+		/**
+        type CurrentUserAccountAsParent<Extended> = SCurrentUserAccount & {
+            users: () => PUser[] | Promise<PUser[]> | (() => Promise<PUser[]>);
+            registeredPublishingPartner: () => Promise<PPublishingPartner | null>;
+            subIsViaGift: () => boolean | Promise<boolean> | (() => Promise<boolean>);
+        }
+        */
+
+		dts.rootScope.addTypeAlias(`${modelName}AsParent`, t.tsTypeReference(t.identifier(parentTypeString)), {
+			generics: hasGenerics ? [{ name: "Extended" }] : [],
+		})
 		const modelFieldFacts = fieldFacts.get(modelName) ?? {}
 
 		// Loop through the resolvers, adding the fields which have resolvers implemented in the source file
@@ -266,21 +253,18 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 				const qForInfos = resolver.infoParamType === "just_root_destructured" ? "?" : ""
 
 				const innerArgs = `args${firstQ}: ${argsType}, obj${secondQ}: { root: ${modelName}AsParent${param}, context${qForInfos}: RedwoodGraphQLContext, info${qForInfos}: GraphQLResolveInfo }`
-
 				const returnType = returnTypeForResolver(returnTypeMapper, field, resolver)
+				const args = resolver.isFunc || resolver.isUnknown ? `(${innerArgs}) => ${returnType ?? "any"}` : returnType
 
-				const docs = field.astNode ? [`SDL: ${graphql.print(field.astNode)}`] : []
-				// For speed we should switch this out to addProperties eventually
-				resolverInterface.addProperty({
-					name: fieldName,
-					leadingTrivia: "\n",
-					docs,
-					type: resolver.isFunc || resolver.isUnknown ? `(${innerArgs}) => ${returnType ?? "any"}` : returnType,
-				})
+				const docs = field.astNode ? `SDL: ${graphql.print(field.astNode)}` : ""
+				const property = t.tsPropertySignature(t.identifier(fieldName), t.tsTypeAnnotation(t.tsTypeReference(t.identifier(args))))
+				t.addComment(property, "leading", " " + docs)
+
+				resolverInterface.body.body.push(property)
 			} else {
-				resolverInterface.addCallSignature({
-					docs: [` @deprecated: SDL ${modelName}.${resolver.name} does not exist in your schema`],
-				})
+				resolverInterface.body.body.push(
+					t.tsPropertySignature(t.identifier(resolver.name), t.tsTypeAnnotation(t.tsTypeReference(t.identifier("void"))))
+				)
 			}
 		})
 

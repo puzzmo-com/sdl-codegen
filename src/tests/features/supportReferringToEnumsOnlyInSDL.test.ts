@@ -38,28 +38,31 @@ export const Game: GameResolvers = {};
 	// We are expecting to see import type GameType from "./shared-schema-types"
 
 	expect(vfsMap.get("/types/games.d.ts")).toMatchInlineSnapshot(`
-		"interface AllGamesResolver {
-		  (args?: RTGame[] | Promise<RTGame[]> | (() => Promise<RTGame[]>), obj?: RTGame[] | Promise<RTGame[]> | (() => Promise<RTGame[]>)): RTGame[] | Promise<RTGame[]> | (() => Promise<RTGame[]>);
+		"/*SDL: allGames(type: GameType!): [Game!]!*/
+		export interface AllGamesResolver {
+		  (args?: {type: GameType}, obj?: { root: Query, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame[] | Promise<RTGame[]> | (() => Promise<RTGame[]>);
 		}
-		interface GameTypeResolvers {}
+		export interface GameTypeResolvers {}
 		type GameAsParent = PGame  ;
 		import { Game as PGame } from \\"@prisma/client\\";
+		import { GraphQLResolveInfo } from \\"graphql\\";
+		import { RedwoodGraphQLContext } from \\"@redwoodjs/graphql-server/dist/types\\";
 		import { Game as RTGame } from \\"./shared-return-types\\";
 		import { GameType, Query } from \\"./shared-schema-types\\";"
 	`)
 
 	expect(vfsMap.get("/types/shared-schema-types.d.ts"))!.toMatchInlineSnapshot(`
-		"interface Game {
+		"export interface Game {
 		  __typename?: \\"Game\\";
 		  id: number;
 		  games: Game[];
 		}
-		interface Query {
+		export interface Query {
 		  __typename?: \\"Query\\";
 		  allGames: Game[];
 		}
-		type GameType = \\"FOOTBALL\\" | \\"BASKETBALL\\";
-		interface Mutation {
+		export type GameType = \\"FOOTBALL\\" | \\"BASKETBALL\\";
+		export interface Mutation {
 		  __typename?: \\"Mutation\\";
 		  __?: string| null;
 		}"

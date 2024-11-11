@@ -1,5 +1,3 @@
-// @eslint-disable-file
-
 import generator from "@babel/generator"
 import parser from "@babel/parser"
 import traverse from "@babel/traverse"
@@ -113,7 +111,9 @@ export const builder = (priorSource: string, opts: {}) => {
 			return
 		}
 
-		throw new Error(`Unsupported type annotation: ${newAnnotion.type} - ${generator(newAnnotion).code}`)
+		// @ts-expect-error - ts/js babel interop issue
+		const code = generator(newAnnotion).code
+		throw new Error(`Unsupported type annotation: ${newAnnotion.type} - ${code}`)
 	}
 
 	/** An internal API for describing a new area for inputting template info */
@@ -121,7 +121,7 @@ export const builder = (priorSource: string, opts: {}) => {
 		const addFunction = (name: string) => {
 			let functionNode = statements.find(
 				(s) => t.isVariableDeclaration(s) && t.isIdentifier(s.declarations[0].id) && s.declarations[0].id.name === name
-			)
+			) as t.VariableDeclaration | undefined
 
 			if (!functionNode) {
 				functionNode = t.variableDeclaration("const", [
@@ -209,7 +209,7 @@ export const builder = (priorSource: string, opts: {}) => {
 							null, // generics
 							f.params.map((p) => {
 								const i = t.identifier(p.name)
-								i.typeAnnotation = t.tsTypeAnnotation(t.tsTypeReference(t.identifier(f.returnType)))
+								i.typeAnnotation = t.tsTypeAnnotation(t.tsTypeReference(t.identifier(p.type)))
 								if (p.optional) i.optional = true
 								return i
 							}),
@@ -219,7 +219,7 @@ export const builder = (priorSource: string, opts: {}) => {
 					} else {
 						const prop = t.tsPropertySignature(t.identifier(f.name), t.tsTypeAnnotation(t.tsTypeReference(t.identifier(f.type))))
 						prop.optional = f.optional
-						if (f.docs?.length) t.addComment(prop, "leading", f.docs)
+						if (f.docs?.length) t.addComment(prop, "leading", " " + f.docs)
 						return prop
 					}
 				})
@@ -253,15 +253,17 @@ export const builder = (priorSource: string, opts: {}) => {
 	/** Experimental function for parsing out a graphql template tag, and ensuring certain fields have been called */
 	const updateGraphQLTemplateTag = (expression: t.Expression, path: string, modelFields: string[]) => {
 		if (path !== ".") throw new Error("Only support updating the root of the graphql tag ATM")
+		// @ts-expect-error - ts/js babel interop issue
 		traverse(
 			expression,
 			{
-				TaggedTemplateExpression(path) {
+				TaggedTemplateExpression(path: traverse.NodePath<t.TaggedTemplateExpression>) {
 					const { tag, quasi } = path.node
 					if (t.isIdentifier(tag) && tag.name === "graphql") {
 						// This is the graphql query
 						const query = quasi.quasis[0].value.raw
 						const inner = query.match(/\{(.*)\}/)?.[1]
+						if (inner === undefined) throw new Error("Could not find inner query")
 
 						path.replaceWithSourceString(`graphql\`${query.replace(inner, `${inner}, ${modelFields.join(", ")}`)}\``)
 						path.stop()
@@ -277,6 +279,7 @@ export const builder = (priorSource: string, opts: {}) => {
 	const parseStatement = (code: string) =>
 		parser.parse(code, { sourceType: "module", plugins: ["jsx", "typescript"] }).program.body[0] as ExpressionStatement
 
+	// @ts-expect-error - ts/js babel interop issue
 	const getResult = () => generator(sourceFile.program, {}).code
 
 	const rootScope = createScope("root", sourceFile, sourceFile.program.body)
@@ -286,7 +289,7 @@ export const builder = (priorSource: string, opts: {}) => {
 /** Parses something as though it is in type-space and extracts the subset of the AST that the string represents  */
 const getTypeLevelAST = (type: string) => {
 	const typeAST = parser.parse(`type A = ${type}`, { sourceType: "module", plugins: ["jsx", "typescript"] })
-	const typeDeclaration = typeAST.program.body.find((s) => s.type === "TSTypeAliasDeclaration")
+	const typeDeclaration = typeAST.program.body.find((s) => t.isTSTypeAliasDeclaration(s))
 	if (!typeDeclaration) throw new Error("No type declaration found in template: " + type)
 	return typeDeclaration.typeAnnotation
 }
@@ -304,5 +307,5 @@ const nodeFromNodeConfig = <T extends Declaration & { typeParameters?: TSTypePar
 		node.typeParameters = t.tsTypeParameterDeclaration(nodeConfig.generics.map((g) => t.tsTypeParameter(null, null, g.name)))
 	}
 
-	return node
+	return statement
 }

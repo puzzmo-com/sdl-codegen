@@ -1,12 +1,9 @@
 /// The main schema for objects and inputs
 
-import { BlockStatement } from "@babel/types"
 import t from "@babel/types"
 import * as graphql from "graphql"
-import * as tsMorph from "ts-morph"
 
 import { AppContext } from "./context.js"
-import { formatDTS } from "./formatDTS.js"
 import { builder } from "./tsBuilder.js"
 import { typeMapper } from "./typeMap.js"
 import { makeStep } from "./utils.js"
@@ -117,7 +114,7 @@ function createSharedExternalSchemaFile(context: AppContext) {
 	if (prior !== text) context.sys.writeFile(fullPath, text)
 }
 
-async function createSharedReturnPositionSchemaFile(context: AppContext) {
+function createSharedReturnPositionSchemaFile(context: AppContext) {
 	const { gql, prisma, fieldFacts } = context
 	const types = gql.getTypeMap()
 	const mapper = typeMapper(context, { preferPrismaModels: true })

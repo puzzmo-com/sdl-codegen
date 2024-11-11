@@ -41,11 +41,12 @@ export const Game = {
 
 	expect(dts.trimStart()).toMatchInlineSnapshot(
 		`
-		"interface GameResolver {
-		  (args?: RTGame| null | Promise<RTGame| null> | (() => Promise<RTGame| null>), obj?: RTGame| null | Promise<RTGame| null> | (() => Promise<RTGame| null>)): RTGame| null | Promise<RTGame| null> | (() => Promise<RTGame| null>);
+		"/*SDL: game: Game*/
+		export interface GameResolver {
+		  (args?: object, obj?: { root: Query, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }): RTGame| null | Promise<RTGame| null> | (() => Promise<RTGame| null>);
 		}
-		interface GameTypeResolvers {
-		  /*SDL: summary: String!*/
+		export interface GameTypeResolvers {
+		  /* SDL: summary: String!*/
 		  summary: (args: undefined, obj: { root: GameAsParent, context?: RedwoodGraphQLContext, info?: GraphQLResolveInfo }) => string;
 		}
 		type GameAsParent = PGame & {summary: () => string} ;

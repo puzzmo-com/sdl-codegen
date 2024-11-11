@@ -31,8 +31,8 @@ export const Game = {
 	const { vfsMap } = await getDTSFilesForRun({ sdl, gamesService, prismaSchema })
 	const dts = vfsMap.get("/types/games.d.ts")!
 	expect(dts.trim()).toMatchInlineSnapshot(`
-		"interface GameTypeResolvers {
-		  /*SDL: puzzle: Node!*/
+		"export interface GameTypeResolvers {
+		  /* SDL: puzzle: Node!*/
 		  puzzle: (args?: undefined, obj?: { root: GameAsParent, context: RedwoodGraphQLContext, info: GraphQLResolveInfo }) => RTNode | Promise<RTNode> | (() => Promise<RTNode>);
 		}
 		type GameAsParent = PGame & {puzzle: () => RTNode | Promise<RTNode> | (() => Promise<RTNode>)} ;

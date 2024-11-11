@@ -29,14 +29,11 @@ export const Game: GameResolvers<{ type: string }> = {};
 
 	expect(vfsMap.get("/types/games.d.ts")!).toContain("interface GameTypeResolvers<Extended>")
 
-	expect(vfsMap.get("/types/games.d.ts")!).toContain("GameAsParent<Extended> = PGame & Extended")
+	expect(vfsMap.get("/types/games.d.ts")!).toContain("GameAsParent<Extended> = PGame   & Extended")
 
 	expect(vfsMap.get("/types/games.d.ts"))!.toMatchInlineSnapshot(`
-		"import type { Game as PGame } from \\"@prisma/client\\";
-
-		export interface GameTypeResolvers<Extended> {}
-
-		type GameAsParent<Extended> = PGame & Extended;
-		"
+		"export interface GameTypeResolvers<Extended> {}
+		type GameAsParent<Extended> = PGame   & Extended;
+		import { Game as PGame } from \\"@prisma/client\\";"
 	`)
 })
