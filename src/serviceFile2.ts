@@ -5,7 +5,7 @@ import * as graphql from "graphql"
 
 import { AppContext } from "./context.js"
 import { getCodeFactsForJSTSFileAtPath } from "./serviceFile.codefacts.js"
-import { builder } from "./tsBuilder.js"
+import { builder, TSBuilder } from "./tsBuilder.js"
 import { CodeFacts, ModelResolverFacts, ResolverFuncFact } from "./typeFacts.js"
 import { TypeMapper, typeMapper } from "./typeMap.js"
 import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField } from "./utils.js"
@@ -54,7 +54,7 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 			const isMutation = v.name in mutationType.getFields()
 			const parentName = isQuery ? queryType.name : isMutation ? mutationType.name : undefined
 			if (parentName) {
-				addDefinitionsForTopLevelResolvers(parentName, v)
+				addDefinitionsForTopLevelResolvers(parentName, v, dts)
 			} else {
 				// Add warning about unused resolver
 				dts.rootScope.addInterface(v.name, [], { exported: true, docs: "This resolver does not exist on Query or Mutation" })
@@ -138,7 +138,7 @@ export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	context.sys.writeFile(dtsFilepath, formatted)
 	return dtsFilepath
 
-	function addDefinitionsForTopLevelResolvers(parentName: string, config: ResolverFuncFact) {
+	function addDefinitionsForTopLevelResolvers(parentName: string, config: ResolverFuncFact, dts: TSBuilder) {
 		const { name } = config
 		let field = queryType.getFields()[name]
 		if (!field) {

@@ -5,7 +5,7 @@ import typescript from "typescript"
 
 import { AppContext } from "./context.js"
 import { PrismaMap, prismaModeller } from "./prismaModeller.js"
-import { lookAtServiceFile } from "./serviceFile.js"
+import { lookAtServiceFile } from "./serviceFile2.js"
 import { createSharedSchemaFiles } from "./sharedSchema.js"
 import { CodeFacts, FieldFacts } from "./typeFacts.js"
 import { RedwoodPaths } from "./types.js"
