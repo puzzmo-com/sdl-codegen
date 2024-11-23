@@ -42,23 +42,19 @@ export const Game = {
 		  __typename?: \\"Game\\";
 		  id?: number;
 		}
-
 		export interface Puzzle {
 		  __typename?: \\"Puzzle\\";
 		  id: number;
 		}
-
 		export type Gameish = Game | Puzzle;
-
 		export interface Query {
 		  __typename?: \\"Query\\";
-		  gameObj?: Game | null | Puzzle | null | null;
+		  gameObj?: Game| null | Puzzle| null| null;
 		  gameArr: (Game | Puzzle)[];
 		}
-
 		export interface Mutation {
 		  __typename?: \\"Mutation\\";
-		  __?: string | null;
+		  __?: string| null;
 		}"
 	`)
 })

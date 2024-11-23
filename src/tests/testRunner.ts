@@ -56,7 +56,7 @@ export async function getDTSFilesForRun(run: Run) {
 	}
 
 	if (run.generateShared) {
-		await createSharedSchemaFiles(appContext)
+		await createSharedSchemaFiles(appContext, false)
 	}
 
 	return {
