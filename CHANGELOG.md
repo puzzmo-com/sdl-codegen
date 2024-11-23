@@ -1,4 +1,8 @@
-# Changelog
+## Changelog
+
+### 3.0.0
+
+- .d.ts generation re-write using a new technique I've been thinking about. The .d.ts files are not pretty. That's not a priority for me right now.
 
 ### 2.0.0
 

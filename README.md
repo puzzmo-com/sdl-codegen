@@ -38,9 +38,7 @@ You could think of it as a smaller, more singular focused version of the mature 
 
 ## Vision
 
-This repo provides the APIs for building a codegen for framework authors, and the goal is not to provide a CLI for a generalized use-case.
-
-It is currently [available inside RedwoodJS](https://redwoodjs.com/docs/typescript/generated-types#experimental-sdl-code-generation) as an option for experimental SDL code generation.
+This repo provides the APIs for building a codegen for framework authors or confident tool builders, and the goal is not to provide a CLI for a generalized use-case.
 
 ## Pipeline
 
