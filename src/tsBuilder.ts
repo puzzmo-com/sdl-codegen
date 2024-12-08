@@ -1,4 +1,4 @@
-import generator from "@babel/generator"
+import _generator from "@babel/generator"
 import parser from "@babel/parser"
 import traverse from "@babel/traverse"
 import t, {
@@ -30,6 +30,10 @@ interface NodeConfig {
 	exported?: boolean
 	generics?: { name: string }[]
 }
+
+// Babel is a CJS package and uses `default` as named binding (`exports.default =`).
+// https://github.com/babel/babel/issues/15269.
+const generator = (_generator as any).default as typeof _generator
 
 export const builder = (priorSource: string, opts: {}) => {
 	const sourceFile = parser.parse(priorSource, { sourceType: "module", plugins: ["jsx", "typescript"] })
@@ -181,7 +185,8 @@ export const builder = (priorSource: string, opts: {}) => {
 				typeNode = type
 			}
 
-			const alias = t.tsTypeAliasDeclaration(t.identifier(name), null, typeNode!)
+			if (!typeNode) throw new Error("Unknown type")
+			const alias = t.tsTypeAliasDeclaration(t.identifier(name), null, typeNode)
 			const statement = nodeFromNodeConfig(alias, nodeConfig)
 			statements.push(statement)
 
