@@ -63,8 +63,3 @@ Once you've made those changes, [re-request review on GitHub](https://docs.githu
 Please try not to force-push commits to PRs that have already been reviewed.
 Doing so makes it harder to review the changes.
 We squash merge all commits so there's no need to try to preserve Git history within a PR branch.
-
-#### Post-Merge Recognition
-
-Once your PR is merged, if you haven't yet been added to the [_Contributors_ table in the README.md](../README.md#contributors) for its [type of contribution](https://allcontributors.org/docs/en/emoji-key "Allcontributors emoji key"), you should be soon.
-Please do ping the maintainer who merged your PR if that doesn't happen within 24 hours - it was likely an oversight on our end!

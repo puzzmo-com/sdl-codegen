@@ -33,9 +33,9 @@ interface NodeConfig {
 
 // Babel is a CJS package and uses `default` as named binding (`exports.default =`).
 // https://github.com/babel/babel/issues/15269.
-const generator = (_generator as any).default as typeof _generator
+const generator =  (_generator as any).default as typeof _generator || _generator 
 
-export const builder = (priorSource: string, opts: {}) => {
+export const builder = (priorSource: string, _opts: {}) => {
 	const sourceFile = parser.parse(priorSource, { sourceType: "module", plugins: ["jsx", "typescript"] })
 
 	/** Declares an import which should exist in the source document */
