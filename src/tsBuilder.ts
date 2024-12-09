@@ -1,7 +1,7 @@
 import _generator from "@babel/generator"
-import parser from "@babel/parser"
-import traverse from "@babel/traverse"
-import t, {
+import _parser from "@babel/parser"
+import _traverse from "@babel/traverse"
+import _t, {
 	addComment,
 	BlockStatement,
 	Declaration,
@@ -34,6 +34,9 @@ interface NodeConfig {
 // Babel is a CJS package and uses `default` as named binding (`exports.default =`).
 // https://github.com/babel/babel/issues/15269.
 const generator =  (_generator as any).default as typeof _generator || _generator 
+const t =  (_t as any).default as typeof _t || _t
+const parser =  (_parser as any).default as typeof _parser || _parser
+const traverse =  (_traverse as any).default as typeof _traverse || _traverse
 
 export const builder = (priorSource: string, _opts: {}) => {
 	const sourceFile = parser.parse(priorSource, { sourceType: "module", plugins: ["jsx", "typescript"] })
@@ -44,7 +47,7 @@ export const builder = (priorSource: string, _opts: {}) => {
 
 		const existing = imports.find((i) => i.source.value === source)
 		if (!existing) {
-			const imports = [] as (t.ImportSpecifier | t.ImportDefaultSpecifier)[]
+			const imports = [] as (_t.ImportSpecifier | _t.ImportDefaultSpecifier)[]
 			if (opts.mainImport) {
 				imports.push(t.importDefaultSpecifier(t.identifier(opts.mainImport)))
 			}
@@ -121,11 +124,11 @@ export const builder = (priorSource: string, _opts: {}) => {
 	}
 
 	/** An internal API for describing a new area for inputting template info */
-	const createScope = (scopeName: string, scopeNode: t.Node, statements: Statement[]) => {
+	const createScope = (scopeName: string, scopeNode: _t.Node, statements: Statement[]) => {
 		const addFunction = (name: string) => {
 			let functionNode = statements.find(
 				(s) => t.isVariableDeclaration(s) && t.isIdentifier(s.declarations[0].id) && s.declarations[0].id.name === name
-			) as t.VariableDeclaration | undefined
+			) as _t.VariableDeclaration | undefined
 
 			if (!functionNode) {
 				functionNode = t.variableDeclaration("const", [
@@ -134,7 +137,7 @@ export const builder = (priorSource: string, _opts: {}) => {
 				statements.push(functionNode)
 			}
 
-			const arrowFn = functionNode.declarations[0].init as t.ArrowFunctionExpression
+			const arrowFn = functionNode.declarations[0].init as _t.ArrowFunctionExpression
 			if (!t.isArrowFunctionExpression(arrowFn)) throw new Error("Expected ArrowFunctionExpression")
 
 			return {
@@ -154,7 +157,7 @@ export const builder = (priorSource: string, _opts: {}) => {
 			}
 		}
 
-		const addVariableDeclaration = (name: string, add: (prior: t.Expression | undefined) => t.Expression) => {
+		const addVariableDeclaration = (name: string, add: (prior: _t.Expression | undefined) => _t.Expression) => {
 			const prior = statements.find(
 				(b) => t.isVariableDeclaration(b) && t.isIdentifier(b.declarations[0].id) && b.declarations[0].id.name === name
 			)
@@ -256,13 +259,13 @@ export const builder = (priorSource: string, _opts: {}) => {
 	}
 
 	/** Experimental function for parsing out a graphql template tag, and ensuring certain fields have been called */
-	const updateGraphQLTemplateTag = (expression: t.Expression, path: string, modelFields: string[]) => {
+	const updateGraphQLTemplateTag = (expression: _t.Expression, path: string, modelFields: string[]) => {
 		if (path !== ".") throw new Error("Only support updating the root of the graphql tag ATM")
 		// @ts-expect-error - ts/js babel interop issue
 		traverse(
 			expression,
 			{
-				TaggedTemplateExpression(path: traverse.NodePath<t.TaggedTemplateExpression>) {
+				TaggedTemplateExpression(path: _traverse.NodePath<_t.TaggedTemplateExpression>) {
 					const { tag, quasi } = path.node
 					if (t.isIdentifier(tag) && tag.name === "graphql") {
 						// This is the graphql query
