@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
-import t, { tsTypeAnnotation } from "@babel/types"
+import * as _t from "@babel/types"
 import * as graphql from "graphql"
 
 import { AppContext } from "./context.js"
@@ -9,6 +9,8 @@ import { builder, TSBuilder } from "./tsBuilder.js"
 import { CodeFacts, ModelResolverFacts, ResolverFuncFact } from "./typeFacts.js"
 import { TypeMapper, typeMapper } from "./typeMap.js"
 import { capitalizeFirstLetter, createAndReferOrInlineArgsForField, inlineArgsForField } from "./utils.js"
+
+const t = (_t as any).default || _t
 
 export const lookAtServiceFile = async (file: string, context: AppContext) => {
 	const { gql, prisma, pathSettings: settings, codeFacts: serviceFacts, fieldFacts } = context

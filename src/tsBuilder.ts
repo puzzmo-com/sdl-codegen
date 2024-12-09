@@ -1,7 +1,7 @@
 import _generator from "@babel/generator"
-import _parser from "@babel/parser"
+import * as _parser from "@babel/parser"
 import _traverse from "@babel/traverse"
-import _t, {
+import {
 	addComment,
 	BlockStatement,
 	Declaration,
@@ -10,6 +10,7 @@ import _t, {
 	TSType,
 	TSTypeParameterDeclaration,
 } from "@babel/types"
+import * as _t from "@babel/types"
 
 interface InterfaceProperty {
 	docs?: string

@@ -1,12 +1,15 @@
 /// The main schema for objects and inputs
 
-import t from "@babel/types"
+import * as _t from "@babel/types"
+
 import * as graphql from "graphql"
 
 import { AppContext } from "./context.js"
 import { builder } from "./tsBuilder.js"
 import { typeMapper } from "./typeMap.js"
 import { makeStep } from "./utils.js"
+
+const t = (_t as any).default || _t
 
 export const createSharedSchemaFiles = async (context: AppContext, verbose: boolean) => {
 	const step = makeStep(verbose)
