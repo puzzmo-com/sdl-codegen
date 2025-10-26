@@ -1,3 +1,11 @@
+This project was built to enhance the types for a version of RedwoodJS which was [deprecated](https://community.redwoodjs.com/t/the-future-of-redwood-launches-today/7938) - they have split out into [RedwoodSDK](https://rwsdk.com/) which doesn't need this sort of abstraction. 
+
+Over time, I treated this library as an Open Source project but it's never really had any activity from people other than small test projects. I think I can make it faster, and work much better for Puzzmo.com if I migrate it into our monorepo and tie it deeply into our replacement for the Redwood API layers.
+
+So, I'm moving this project to be archived - it was an interesting problem to look at, tchaus!
+
+---
+
 <h1 align="center">SDL-Codegen</h1>
 
 <p align="center">GraphQL .d.ts file generation for SDL-first projects</p>
